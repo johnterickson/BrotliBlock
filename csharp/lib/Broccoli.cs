@@ -13,7 +13,7 @@ public unsafe class Broccoli
 
     public static void Concat(IEnumerable<Stream> inStreams, Action<ArraySegment<byte>> outputCallback)
     {
-        IntPtr state = BroccoliCreateInstance();
+        BroccoliState state = BroccoliCreateInstance();
         byte[] inBuffer = new byte[4096];
         byte[] outBuffer = new byte[4096];
         int bytesRead;
@@ -26,7 +26,7 @@ public unsafe class Broccoli
             // iterate over inputs
             foreach(Stream inStream in inStreams)
             {
-                BroccoliNewBrotliFile(state);
+                BroccoliNewBrotliFile(&state);
                 
                 do
                 {
@@ -36,7 +36,7 @@ public unsafe class Broccoli
                     while (true)
                     {
                         BroccoliResult result = BroccoliConcatStream(
-                            state,
+                            &state,
                             ref availableIn, ref inPtr,
                             ref availableOut, ref outPtr);
                         if (result == BroccoliResult.BroccoliNeedsMoreInput)
@@ -59,7 +59,7 @@ public unsafe class Broccoli
             while (true)
             {
                 BroccoliResult result = BroccoliConcatFinish(
-                    state,
+                    &state,
                     ref availableOut, ref outPtr);
 
                 if (result == BroccoliResult.BroccoliNeedsMoreOutput || result == BroccoliResult.BroccoliSuccess)
@@ -82,6 +82,13 @@ public unsafe class Broccoli
         }
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    struct BroccoliState
+    {
+        void* unused;
+        fixed byte data[248];
+    }
+
     private enum BroccoliResult
     {
         BroccoliSuccess = 0,
@@ -95,13 +102,12 @@ public unsafe class Broccoli
 
     // BroccoliState BroccoliCreateInstance();
     [DllImport("brotli_ffi.dll", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr BroccoliCreateInstance();
+    private static extern BroccoliState BroccoliCreateInstance();
 
     // void BroccoliNewBrotliFile(BroccoliState *state);
     [DllImport("brotli_ffi.dll", CallingConvention = CallingConvention.Cdecl)]
     private static extern void BroccoliNewBrotliFile(
-        [MarshalAs(UnmanagedType.LPStruct)]
-        IntPtr state);
+        BroccoliState* state);
 
     // BroccoliResult BroccoliConcatStream(
     //     BroccoliState *state,
@@ -111,8 +117,7 @@ public unsafe class Broccoli
     //     uint8_t **output_buf_ptr);
     [DllImport("brotli_ffi.dll", CallingConvention = CallingConvention.Cdecl)]
     private static extern BroccoliResult BroccoliConcatStream(
-        [MarshalAs(UnmanagedType.LPStruct)]
-        IntPtr state,
+        BroccoliState* state,
         ref ulong available_in,
         ref byte* input_buf_ptr,
         ref ulong available_out,
@@ -123,8 +128,7 @@ public unsafe class Broccoli
     //     uint8_t**output_buf);
     [DllImport("brotli_ffi.dll", CallingConvention = CallingConvention.Cdecl)]
     private static extern BroccoliResult BroccoliConcatFinish(
-        [MarshalAs(UnmanagedType.LPStruct)]
-        IntPtr state,
+        BroccoliState* state,
         ref ulong available_out,
         ref byte* output_buf_ptr);
 }
