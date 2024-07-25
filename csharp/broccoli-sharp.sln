@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.002.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "broccoli-sharp", "lib\broccoli-sharp.csproj", "{B61D82D0-3BA9-4FC7-9A50-F57A7C36005E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "test", "test\test.csproj", "{F9C8D5EC-12DE-4EC0-947C-7C305391E271}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B61D82D0-3BA9-4FC7-9A50-F57A7C36005E}.Debug|x64.ActiveCfg = Debug|x64
+		{B61D82D0-3BA9-4FC7-9A50-F57A7C36005E}.Debug|x64.Build.0 = Debug|x64
+		{B61D82D0-3BA9-4FC7-9A50-F57A7C36005E}.Release|x64.ActiveCfg = Release|x64
+		{B61D82D0-3BA9-4FC7-9A50-F57A7C36005E}.Release|x64.Build.0 = Release|x64
+		{F9C8D5EC-12DE-4EC0-947C-7C305391E271}.Debug|x64.ActiveCfg = Debug|x64
+		{F9C8D5EC-12DE-4EC0-947C-7C305391E271}.Debug|x64.Build.0 = Debug|x64
+		{F9C8D5EC-12DE-4EC0-947C-7C305391E271}.Release|x64.ActiveCfg = Release|x64
+		{F9C8D5EC-12DE-4EC0-947C-7C305391E271}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B9D49BB9-7204-47BE-B467-5E907C1D6B0F}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,3 @@
+[submodule "rust-brotli"]
+	path = rust-brotli
+	url = https://github.com/dropbox/rust-brotli.git
