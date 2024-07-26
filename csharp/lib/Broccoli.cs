@@ -6,14 +6,14 @@ namespace broccoli_sharp;
 
 public unsafe class Broccoli
 {
-    public static void Concat(IEnumerable<Stream> inStreams, Stream outputStream)
+    public static void Concat(byte window_size, IEnumerable<Stream> inStreams, Stream outputStream)
     {
-        Concat(inStreams, (ArraySegment<byte> segment) => outputStream.Write(segment.Array!, segment.Offset, segment.Count));   
+        Concat(window_size, inStreams, (ArraySegment<byte> segment) => outputStream.Write(segment.Array!, segment.Offset, segment.Count));   
     }
 
-    public static void Concat(IEnumerable<Stream> inStreams, Action<ArraySegment<byte>> outputCallback)
+    public static void Concat(byte window_size, IEnumerable<Stream> inStreams, Action<ArraySegment<byte>> outputCallback)
     {
-        BroccoliState state = BroccoliCreateInstance();
+        BroccoliState state = BroccoliCreateInstanceWithWindowSize(window_size);
         byte[] inBuffer = new byte[4096];
         byte[] outBuffer = new byte[4096];
         int bytesRead;
@@ -28,9 +28,14 @@ public unsafe class Broccoli
             {
                 BroccoliNewBrotliFile(&state);
                 
-                do
+                while (true)
                 {
                     bytesRead = inStream.Read(inBuffer, 0, inBuffer.Length);
+                    if (bytesRead == 0)
+                    {
+                        break;
+                    }
+
                     byte *inPtr = inPtrBase;
                     ulong availableIn = (ulong)bytesRead;
                     while (true)
@@ -52,7 +57,7 @@ public unsafe class Broccoli
                         }
                         throw new Exception($"BroccoliConcatStream failed: {result}");
                     }
-                } while (bytesRead > 0);
+                }
             }
 
             // finalize
@@ -103,6 +108,9 @@ public unsafe class Broccoli
     // BroccoliState BroccoliCreateInstance();
     [DllImport("brotli_ffi.dll", CallingConvention = CallingConvention.Cdecl)]
     private static extern BroccoliState BroccoliCreateInstance();
+
+    [DllImport("brotli_ffi.dll", CallingConvention = CallingConvention.Cdecl)]
+    private static extern BroccoliState BroccoliCreateInstanceWithWindowSize(byte window_size);
 
     // void BroccoliNewBrotliFile(BroccoliState *state);
     [DllImport("brotli_ffi.dll", CallingConvention = CallingConvention.Cdecl)]

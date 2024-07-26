@@ -25,10 +25,10 @@ public class BroccoliTests
         return bytes;
     }
 
-    private byte[] Compress(byte[] bytes, bool catable, bool appendable)
+    private byte[] Compress(byte[] bytes, bool catable = false, bool appendable = false, byte window_size = 24)
     {
         using var compressed = new MemoryStream();
-        using (var s0 = new BrotliStream(compressed, CompressionMode.Compress, leaveOpen: true))
+        using (var s0 = new BrotliStream(compressed, CompressionMode.Compress, leaveOpen: true, window_bits: window_size))
         {
             if (catable)
             {
@@ -67,6 +67,7 @@ public class BroccoliTests
     public void ConcatEmpty()
     {
         Broccoli.Concat(
+            window_size: 11,
             new[]
             {
                 new MemoryStream(),
@@ -78,22 +79,24 @@ public class BroccoliTests
     [TestMethod]
     public void ConcatBlocks()
     {
-        byte[] content0 = CreateRandomBytes(10, 64);
-        byte[] compressed0 = Compress(content0, catable: true, appendable: false);
+        byte[] content0 = CreateRandomBytes(100, 64);
+        byte[] compressed0 = Compress(content0, catable: true, window_size: 11);
         CollectionAssert.AreEqual(content0, Decompress(new MemoryStream(compressed0)));
-        byte[] content1 = CreateRandomBytes(10, 64);
-        byte[] compressed1 = Compress(content1, catable: true, appendable: false);
+        byte[] content1 = CreateRandomBytes(100, 64);
+        byte[] compressed1 = Compress(content1, catable: true, window_size: 11);
         CollectionAssert.AreEqual(content1, Decompress(new MemoryStream(compressed1)));
 
-        using var output = new MemoryStream();
+        using var compressed = new MemoryStream();
         Broccoli.Concat(
+            window_size: 11,
             new[]
             {
                 new MemoryStream(compressed0),
                 new MemoryStream(compressed1),
             },
-            output);
-        var decompressed = output.ToArray();
+            compressed);
+        compressed.Position = 0;
+        var decompressed = Decompress(compressed);
 
         byte[] content = content0.Concat(content1).ToArray();
         CollectionAssert.AreEqual (content, decompressed);
