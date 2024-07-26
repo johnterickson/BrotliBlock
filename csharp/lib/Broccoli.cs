@@ -107,14 +107,14 @@ public unsafe class Broccoli
     };
 
     // BroccoliState BroccoliCreateInstance();
-    [DllImport("brotli_ffi.dll", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport("brotli_ffi", CallingConvention = CallingConvention.Cdecl)]
     private static extern BroccoliState BroccoliCreateInstance();
 
-    [DllImport("brotli_ffi.dll", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport("brotli_ffi", CallingConvention = CallingConvention.Cdecl)]
     private static extern BroccoliState BroccoliCreateInstanceWithWindowSize(byte window_size);
 
     // void BroccoliNewBrotliFile(BroccoliState *state);
-    [DllImport("brotli_ffi.dll", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport("brotli_ffi", CallingConvention = CallingConvention.Cdecl)]
     private static extern void BroccoliNewBrotliFile(
         BroccoliState* state);
 
@@ -124,7 +124,7 @@ public unsafe class Broccoli
     //     const uint8_t **input_buf_ptr,
     //     size_t *available_out,
     //     uint8_t **output_buf_ptr);
-    [DllImport("brotli_ffi.dll", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport("brotli_ffi", CallingConvention = CallingConvention.Cdecl)]
     private static extern BroccoliResult BroccoliConcatStream(
         BroccoliState* state,
         ref ulong available_in,
@@ -135,7 +135,7 @@ public unsafe class Broccoli
     // BroccoliResult BroccoliConcatFinish(BroccoliState * state,
     //     size_t *available_out,
     //     uint8_t**output_buf);
-    [DllImport("brotli_ffi.dll", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport("brotli_ffi", CallingConvention = CallingConvention.Cdecl)]
     private static extern BroccoliResult BroccoliConcatFinish(
         BroccoliState* state,
         ref ulong available_out,
