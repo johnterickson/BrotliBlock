@@ -11,6 +11,7 @@ public unsafe class Broccoli
         Concat(window_size, inStreams, (ArraySegment<byte> segment) => outputStream.Write(segment.Array!, segment.Offset, segment.Count));   
     }
 
+    // transcribed from rust-brotli\src\ffi\broccoli.rs
     public static void Concat(byte window_size, IEnumerable<Stream> inStreams, Action<ArraySegment<byte>> outputCallback)
     {
         BroccoliState state = BroccoliCreateInstanceWithWindowSize(window_size);

@@ -1,1 +1,0 @@
-Copied from https://github.com/dotnet/corefxlab/tree/5dbb7ad206e67afd713654f41ff1d275c384cb39/src/NetFxLab.IO.Compression.Brotli
