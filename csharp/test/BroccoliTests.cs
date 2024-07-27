@@ -76,19 +76,18 @@ public class BroccoliTests
             new MemoryStream());
     }
 
-    [TestMethod]
-    public void ConcatBlocks()
+    private void ConcatBlocks(byte compress_window_bits, byte concat_window_bits)
     {
         byte[] content0 = CreateRandomBytes(100, 64);
-        byte[] compressed0 = Compress(content0, catable: true, window_size: 11);
+        byte[] compressed0 = Compress(content0, catable: true, window_size: compress_window_bits);
         CollectionAssert.AreEqual(content0, Decompress(new MemoryStream(compressed0)));
         byte[] content1 = CreateRandomBytes(100, 64);
-        byte[] compressed1 = Compress(content1, catable: true, window_size: 11);
+        byte[] compressed1 = Compress(content1, catable: true, window_size: compress_window_bits);
         CollectionAssert.AreEqual(content1, Decompress(new MemoryStream(compressed1)));
 
         using var compressed = new MemoryStream();
         Broccoli.Concat(
-            window_size: 11,
+            concat_window_bits,
             new[]
             {
                 new MemoryStream(compressed0),
@@ -100,5 +99,17 @@ public class BroccoliTests
 
         byte[] content = content0.Concat(content1).ToArray();
         CollectionAssert.AreEqual (content, decompressed);
+    }
+
+    [TestMethod]
+    public void ConcatBlocksSpecificWindowSize()
+    {
+        ConcatBlocks(11, 11);
+    }
+
+    [TestMethod]
+    public void ConcatBlocksUnspecifiedWindowSize()
+    {
+        ConcatBlocks(11, 0);
     }
 }

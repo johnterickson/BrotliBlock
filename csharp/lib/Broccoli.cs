@@ -8,13 +8,18 @@ public unsafe class Broccoli
 {
     public static void Concat(byte window_size, IEnumerable<Stream> inStreams, Stream outputStream)
     {
-        Concat(window_size, inStreams, (ArraySegment<byte> segment) => outputStream.Write(segment.Array!, segment.Offset, segment.Count));   
+        Concat(
+            window_size, 
+            inStreams.Select<Stream,Func<byte[],int>>((Stream s) => ((byte[] buffer) => s.Read(buffer, 0, buffer.Length))),
+            (ArraySegment<byte> segment) => outputStream.Write(segment.Array!, segment.Offset, segment.Count));   
     }
 
     // transcribed from rust-brotli\src\ffi\broccoli.rs
-    public static void Concat(byte window_size, IEnumerable<Stream> inStreams, Action<ArraySegment<byte>> outputCallback)
+    public static void Concat(byte window_size, IEnumerable<Func<byte[],int>> inStreams, Action<ArraySegment<byte>> outputCallback)
     {
-        BroccoliState state = BroccoliCreateInstanceWithWindowSize(window_size);
+        BroccoliState state = window_size == 0
+            ? BroccoliCreateInstance()
+            : BroccoliCreateInstanceWithWindowSize(window_size);
         byte[] inBuffer = new byte[4096];
         byte[] outBuffer = new byte[4096];
         int bytesRead;
@@ -25,13 +30,13 @@ public unsafe class Broccoli
             ulong availableOut = (ulong)outBuffer.Length;
 
             // iterate over inputs
-            foreach(Stream inStream in inStreams)
+            foreach(Func<byte[], int> inStream in inStreams)
             {
                 BroccoliNewBrotliFile(&state);
                 
                 while (true)
                 {
-                    bytesRead = inStream.Read(inBuffer, 0, inBuffer.Length);
+                    bytesRead = inStream(inBuffer);
                     if (bytesRead == 0)
                     {
                         break;
