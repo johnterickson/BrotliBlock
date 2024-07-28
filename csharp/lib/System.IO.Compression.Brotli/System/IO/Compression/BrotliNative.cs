@@ -43,6 +43,8 @@ namespace NetFxLab.IO.Compression
         SizeHint,
         BROTLI_PARAM_CATABLE = 167,
         BROTLI_PARAM_APPENDABLE = 168,
+        BROTLI_PARAM_BYTE_ALIGN = 172,
+        BROTLI_PARAM_BARE_STREAM = 173,
     };
 
     /// <summary>

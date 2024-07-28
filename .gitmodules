@@ -1,3 +1,4 @@
 [submodule "rust-brotli"]
 	path = rust-brotli
 	url = https://github.com/johnterickson/rust-brotli.git
+	branch = bytealign
