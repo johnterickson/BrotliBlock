@@ -8,11 +8,13 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-
+    
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
@@ -27,14 +29,15 @@ jobs:
     - name: Restore dependencies
       run: cd csharp && dotnet restore
     - name: Build
-      run: cd csharp && dotnet build --no-restore
+      run: cd csharp && dotnet build --no-restore && dotnet build --no-restore -c Release
     - name: Test
-      run: cd csharp && dotnet test --no-build --verbosity normal
+      run: cd csharp && dotnet test --no-build --verbosity normal && dotnet test --no-build --verbosity normal -c Release
     - name: Create nuget package
       run: cd csharp && dotnet pack --no-build --output nupkgs
     - name: Publish build outputs
       uses: actions/upload-artifact@v2
       with:
         path: csharp/lib/bin/x64/Release/
+        name: ${{ matrix.os }}
       
 
