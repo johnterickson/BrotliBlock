@@ -30,3 +30,11 @@ jobs:
       run: cd csharp && dotnet build --no-restore
     - name: Test
       run: cd csharp && dotnet test --no-build --verbosity normal
+    - name: Create nuget package
+      run: cd csharp && dotnet pack --no-build --output nupkgs
+    - name: Publish build outputs
+      uses: actions/upload-artifact@v2
+      with:
+        path: csharp/lib/bin/x64/Release/
+      
+
