@@ -1,11 +1,58 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.IO.Compression;
+using System.Runtime.InteropServices;
+using BrotliStream = NetFxLab.IO.Compression.BrotliStream;
+using BrotliEncoderParameter = NetFxLab.IO.Compression.BrotliEncoderParameter;
+using Brotli = NetFxLab.IO.Compression.Brotli;
 
 namespace broccoli_sharp;
 
-// rust-brotli\c\target\debug\brotli_ffi.dll
+/*
+https://github.com/dropbox/rust-brotli/pull/49#issuecomment-1804633560
+
+Ok this is really cool! We have a scenario that is similar to https://dropbox.tech/infrastructure/-broccoli--syncing-faster-by-syncing-less where we our customers upload to a content-addressable-store.
+
+Create a header block:
+touch empty.bin
+ --appendable --bytealign --bare -c empty.bin start.br
+Individually compress the actual data blocks like this:
+ --catable --bytealign --bare -c block001 block001.br
+Then fake a ISLASTEMPTY metablock:
+printf "\x03" > ~/end.br
+
+Then you can both
+
+Decompress individual blocks by a) prepending the start block and b) appending the end block: cat start.br block001.br end.br | brotli -d
+A standard decompressor (e.g. curl --compressed) can recreate the whole file from the concatenation of all the compressed blocks: e.g. cat start.br block*.br end.br | brotli -d
+If you need to, rearrange the compressed blocks order to rearrange the output order
+
+*/
+
 
 public unsafe class Broccoli
 {
+    public static readonly byte[] EndBlock = new byte[1] { 0x03 };
+
+    private static readonly Lazy<byte[]>[] StartBlocks = Enumerable.Range(0, Brotli.MaxWindowBits + 1)
+        .Select((int window_bits) => new Lazy<byte[]>(() => CreateStartBlock((byte)window_bits), LazyThreadSafetyMode.PublicationOnly))
+        .ToArray(); 
+
+    private static byte[] CreateStartBlock(byte window_size)
+    {
+        using var compressed = new MemoryStream();
+        using (var s0 = new BrotliStream(compressed, CompressionMode.Compress, leaveOpen: true, window_bits: window_size))
+        {
+            s0.SetEncoderParameter((byte)BrotliEncoderParameter.BROTLI_PARAM_APPENDABLE, 1);
+            s0.SetEncoderParameter((byte)BrotliEncoderParameter.BROTLI_PARAM_BYTE_ALIGN, 1);
+            s0.SetEncoderParameter((byte)BrotliEncoderParameter.BROTLI_PARAM_BARE_STREAM, 1);
+        }
+        return compressed.ToArray();
+    }
+
+    public static byte[] GetStartBlock(byte window_bits)
+    {
+        return StartBlocks[window_bits].Value;
+    }
+
     public static void Concat(byte window_size, IEnumerable<Stream> inStreams, Stream outputStream)
     {
         Concat(

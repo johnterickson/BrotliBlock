@@ -33,7 +33,7 @@ namespace NetFxLab.IO.Compression
     /// LCModeling-  Flag that affects usage of "literal context modeling" format feature. This flag is a "decoding-speed vs compression ratio" trade-off.
     /// SizeHint - Estimated total input size for all ::BrotliEncoderCompressStream calls. The default value is 0, which means that the total input size is unknown.
     /// </summary>
-    internal enum BrotliEncoderParameter
+    public enum BrotliEncoderParameter
     {
         Mode,
         Quality,

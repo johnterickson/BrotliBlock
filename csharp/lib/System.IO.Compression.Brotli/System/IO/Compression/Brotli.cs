@@ -12,8 +12,8 @@ namespace NetFxLab.IO.Compression
 {
     public static class Brotli
     {
-        private const int MinWindowBits = 10;
-        private const int MaxWindowBits = 24;
+        internal const int MinWindowBits = 10;
+        internal const int MaxWindowBits = 24;
         private const int MinQuality = 0;
         private const int MaxQuality = 11;
 
