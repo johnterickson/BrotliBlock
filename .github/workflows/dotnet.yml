@@ -20,6 +20,8 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
+    - name: build rust-brotli fork
+      run: cd rust-brotli/c && make
     - name: Restore dependencies
       run: cd csharp && dotnet restore
     - name: Build
