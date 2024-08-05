@@ -8,6 +8,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Platforms>x64</Platforms>
     <NoWarn>CS8981;CS8601;CS8602;CS8603;CS8604;;CS8618;CS8625;CS8765</NoWarn>
+    <DefineConstants>BIT64</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

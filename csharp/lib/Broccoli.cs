@@ -30,29 +30,6 @@ If you need to, rearrange the compressed blocks order to rearrange the output or
 
 public unsafe class Broccoli
 {
-    public static readonly byte[] EndBlock = new byte[1] { 0x03 };
-
-    private static readonly Lazy<byte[]>[] StartBlocks = Enumerable.Range(0, Brotli.MaxWindowBits + 1)
-        .Select((int window_bits) => new Lazy<byte[]>(() => CreateStartBlock((byte)window_bits), LazyThreadSafetyMode.PublicationOnly))
-        .ToArray(); 
-
-    private static byte[] CreateStartBlock(byte window_size)
-    {
-        using var compressed = new MemoryStream();
-        using (var s0 = new BrotliStream(compressed, CompressionMode.Compress, leaveOpen: true, window_bits: window_size))
-        {
-            s0.SetEncoderParameter((byte)BrotliEncoderParameter.BROTLI_PARAM_APPENDABLE, 1);
-            s0.SetEncoderParameter((byte)BrotliEncoderParameter.BROTLI_PARAM_BYTE_ALIGN, 1);
-            s0.SetEncoderParameter((byte)BrotliEncoderParameter.BROTLI_PARAM_BARE_STREAM, 1);
-        }
-        return compressed.ToArray();
-    }
-
-    public static byte[] GetStartBlock(byte window_bits)
-    {
-        return StartBlocks[window_bits].Value;
-    }
-
     public static void Concat(byte window_size, IEnumerable<Stream> inStreams, Stream outputStream)
     {
         Concat(

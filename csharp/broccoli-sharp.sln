@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "broccoli-sharp", "lib\brocc
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "test", "test\test.csproj", "{F9C8D5EC-12DE-4EC0-947C-7C305391E271}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "broccoli", "broccoli\broccoli.csproj", "{B8BD34F4-782C-450C-B598-E86CB50B9B69}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,10 @@ Global
 		{F9C8D5EC-12DE-4EC0-947C-7C305391E271}.Debug|x64.Build.0 = Debug|x64
 		{F9C8D5EC-12DE-4EC0-947C-7C305391E271}.Release|x64.ActiveCfg = Release|x64
 		{F9C8D5EC-12DE-4EC0-947C-7C305391E271}.Release|x64.Build.0 = Release|x64
+		{B8BD34F4-782C-450C-B598-E86CB50B9B69}.Debug|x64.ActiveCfg = Debug|x64
+		{B8BD34F4-782C-450C-B598-E86CB50B9B69}.Debug|x64.Build.0 = Debug|x64
+		{B8BD34F4-782C-450C-B598-E86CB50B9B69}.Release|x64.ActiveCfg = Release|x64
+		{B8BD34F4-782C-450C-B598-E86CB50B9B69}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

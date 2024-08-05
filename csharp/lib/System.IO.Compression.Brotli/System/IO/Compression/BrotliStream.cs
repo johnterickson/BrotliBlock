@@ -30,12 +30,26 @@ namespace NetFxLab.IO.Compression
         private int totalWrote;
         private Brotli.State _state;
         private TransformationStatus _transformationResult;
+        private readonly bool _bare;
 
         public override bool CanTimeout => true;
 
         public override int ReadTimeout { get; set; }
 
         public override int WriteTimeout { get; set; }
+
+        public static readonly byte[] EndBlock = new byte[1] { 0x03 };
+
+        private static readonly Lazy<byte[]>[] StartBlocks = Enumerable.Range(0, Brotli.MaxWindowBits + 1)
+            .Select((int window_bits) => new Lazy<byte[]>(() => CreateStartBlock((byte)window_bits), LazyThreadSafetyMode.PublicationOnly))
+            .ToArray(); 
+
+        private static byte[] CreateStartBlock(byte window_size)
+        {
+            using var compressed = new MemoryStream();
+            using var s0 = new BrotliStream(compressed, CompressionMode.Compress, window_bits: window_size, bare: true);
+            return compressed.ToArray();
+        }
 
         public BrotliStream(Stream baseStream, CompressionMode mode, bool leaveOpen, int bufferSize, CompressionLevel quality) : this(baseStream, mode, leaveOpen, bufferSize)
         {
@@ -55,7 +69,7 @@ namespace NetFxLab.IO.Compression
         }
 
         public BrotliStream(Stream baseStream, CompressionMode mode, bool leaveOpen = false, int bufferSize = DefaultBufferSize,
-            uint quality = 11, uint window_bits = 24)
+            uint quality = 11, uint window_bits = 24, bool bare = false)
         {
             if (baseStream == null)
             {
@@ -65,25 +79,30 @@ namespace NetFxLab.IO.Compression
             _mode = mode;
             _stream = baseStream;
             _leaveOpen = leaveOpen;
+            _bare = bare;
             _state = new Brotli.State();
+            _buffer = new byte[_bufferSize];
+            _transformationResult = TransformationStatus.NeedMoreSourceData;
+            _availableOutput = _bufferSize;
             if (_mode == CompressionMode.Compress)
             {
                 _state.SetQuality(quality);
                 _state.SetWindow(window_bits);
                 WriteTimeout = 0;
+
+                if (_bare)
+                {
+                    _state.SetEncoderParameter(BrotliEncoderParameter.BROTLI_PARAM_BYTE_ALIGN, 1);
+                    _state.SetEncoderParameter(BrotliEncoderParameter.BROTLI_PARAM_CATABLE, 1);
+                    _state.SetEncoderParameter(BrotliEncoderParameter.BROTLI_PARAM_MAGIC_NUMBER, 1);
+                    _state.SetEncoderParameter(BrotliEncoderParameter.BROTLI_PARAM_BARE_STREAM, 1);
+                    this.Write(StartBlocks[window_bits].Value);
+                }
             }
             else
             {
                 ReadTimeout = 0;
             }
-            _buffer = new byte[_bufferSize];
-            _transformationResult = TransformationStatus.NeedMoreSourceData;
-            _availableOutput = _bufferSize;
-        }
-
-        public void SetEncoderParameter(int parameter, uint value)
-        {
-            _state.SetEncoderParameter((BrotliEncoderParameter)parameter, value);
         }
 
         public override bool CanRead
@@ -266,7 +285,6 @@ namespace NetFxLab.IO.Compression
                 }
                 copyLen = bytesRemain > _bufferSize ? _bufferSize : bytesRemain;
                 Span<byte> bufferInput = new Span<byte>(buffer, currentOffset, copyLen);
-                _transformationResult = TransformationStatus.DestinationTooSmall;
                 _transformationResult = Brotli.Compress(bufferInput, _buffer, out _availableInput, out _availableOutput, ref _state);
                 if (_transformationResult == TransformationStatus.InvalidData)
                 {
