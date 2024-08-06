@@ -31,6 +31,7 @@ namespace NetFxLab.IO.Compression
         private Brotli.State _state;
         private TransformationStatus _transformationResult;
         private readonly bool _bare;
+        private readonly uint _window_bits;
 
         public override bool CanTimeout => true;
 
@@ -47,9 +48,16 @@ namespace NetFxLab.IO.Compression
         private static byte[] CreateStartBlock(byte window_size)
         {
             using var compressed = new MemoryStream();
-            using var s0 = new BrotliStream(compressed, CompressionMode.Compress, window_bits: window_size, bare: true);
+            using (var s0 = new BrotliStream(compressed, CompressionMode.Compress, window_bits: window_size, 
+                appendable: true, byte_align: true, bare: true, leaveOpen: true))
+            {
+                // empty
+            }
+                
             return compressed.ToArray();
         }
+
+        public static byte[] GetStartBlock(byte window_size) => StartBlocks[window_size].Value;
 
         public BrotliStream(Stream baseStream, CompressionMode mode, bool leaveOpen, int bufferSize, CompressionLevel quality) : this(baseStream, mode, leaveOpen, bufferSize)
         {
@@ -69,12 +77,14 @@ namespace NetFxLab.IO.Compression
         }
 
         public BrotliStream(Stream baseStream, CompressionMode mode, bool leaveOpen = false, int bufferSize = DefaultBufferSize,
-            uint quality = 11, uint window_bits = 24, bool bare = false)
+            uint quality = 11, uint window_bits = 24, bool bare = false, bool catable = false, bool appendable = false, bool byte_align = false,
+            bool magic = false)
         {
             if (baseStream == null)
             {
                 throw new ArgumentNullException("baseStream");
             }
+            _window_bits = window_bits;
             _bufferSize = bufferSize;
             _mode = mode;
             _stream = baseStream;
@@ -90,18 +100,39 @@ namespace NetFxLab.IO.Compression
                 _state.SetWindow(window_bits);
                 WriteTimeout = 0;
 
-                if (_bare)
+                if (catable)
+                {
+                    _state.SetEncoderParameter(BrotliEncoderParameter.BROTLI_PARAM_CATABLE, 1);
+                }
+                
+                if (appendable)
+                {
+                    _state.SetEncoderParameter(BrotliEncoderParameter.BROTLI_PARAM_APPENDABLE, 1);
+                }
+
+                if (byte_align)
                 {
                     _state.SetEncoderParameter(BrotliEncoderParameter.BROTLI_PARAM_BYTE_ALIGN, 1);
-                    _state.SetEncoderParameter(BrotliEncoderParameter.BROTLI_PARAM_CATABLE, 1);
-                    _state.SetEncoderParameter(BrotliEncoderParameter.BROTLI_PARAM_MAGIC_NUMBER, 1);
+                }
+
+                if (_bare)
+                {
                     _state.SetEncoderParameter(BrotliEncoderParameter.BROTLI_PARAM_BARE_STREAM, 1);
-                    this.Write(StartBlocks[window_bits].Value);
+                }
+
+                if (magic)
+                {
+                    _state.SetEncoderParameter(BrotliEncoderParameter.BROTLI_PARAM_MAGIC_NUMBER, 1);
                 }
             }
             else
             {
                 ReadTimeout = 0;
+
+                if (_bare)
+                {
+                    _transformationResult = TransformationStatus.ReadBareStartBlock;
+                }
             }
         }
 
@@ -233,19 +264,34 @@ namespace NetFxLab.IO.Compression
             }
             while (true)
             {
-                if (_transformationResult == TransformationStatus.NeedMoreSourceData)
+                if (_transformationResult == TransformationStatus.ReadBareStartBlock)
+                {
+                    byte[] startBlock = StartBlocks[_window_bits].Value;
+                    startBlock.CopyTo(_buffer, 0);
+                    _availableInput = startBlock.Length;
+                }
+                else if (_transformationResult == TransformationStatus.NeedMoreSourceData)
                 {
                     _availableInput = _stream.Read(_buffer, 0, _bufferSize);
-                    if ((int)_availableInput <= 0)
+                    if (_availableInput <= 0)
                     {
-                        break;
+                        if (_bare)
+                        {
+                            _transformationResult = TransformationStatus.ReadBareEndBlock;
+                            EndBlock.CopyTo(_buffer, 0);
+                            _availableInput = EndBlock.Length;
+                        }
+                        else 
+                        {
+                            break;
+                        }
                     }
                 }
                 else if (_transformationResult != TransformationStatus.DestinationTooSmall)
                 {
                     break;
                 }
-                _transformationResult = Brotli.Decompress(_buffer, buffer, out _availableInput, out _availableOutput, ref _state);
+                _transformationResult = Brotli.Decompress(new ReadOnlySpan<byte>(_buffer, 0, _availableInput), buffer, out _availableInput, out _availableOutput, ref _state);
                 if (_availableOutput != 0)
                 {
                     return _availableOutput;

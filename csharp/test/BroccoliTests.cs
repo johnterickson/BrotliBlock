@@ -1,6 +1,5 @@
 namespace test;
 
-using broccoli_sharp;
 using System.IO.Compression;
 using BrotliStream = NetFxLab.IO.Compression.BrotliStream;
 using BrotliEncoderParameter = NetFxLab.IO.Compression.BrotliEncoderParameter;
@@ -30,39 +29,22 @@ public class BroccoliTests
         return bytes;
     }
 
-    private byte[] Compress(byte[] bytes, bool catable = false, bool appendable = false, bool bare = false, bool bytealign = false, byte window_size = 24)
+    private byte[] Compress(byte[] bytes, bool bare = false, byte window_size = 22)
     {
         using var compressed = new MemoryStream();
-        using (var s0 = new BrotliStream(compressed, CompressionMode.Compress, leaveOpen: true, window_bits: window_size))
+        using (var s0 = new BrotliStream(compressed, CompressionMode.Compress, window_bits: window_size,
+            bare: bare, catable: bare, byte_align: bare, appendable: bare, magic: bare, leaveOpen: true))
         {
-            if (catable)
-            {
-                s0.SetEncoderParameter((int)BrotliEncoderParameter.BROTLI_PARAM_CATABLE, 1);
-            }
-
-            if (appendable)
-            {
-                s0.SetEncoderParameter((int)BrotliEncoderParameter.BROTLI_PARAM_APPENDABLE, 1);
-            }
-
-            if (bare)
-            {
-                s0.SetEncoderParameter((int)BrotliEncoderParameter.BROTLI_PARAM_BARE_STREAM, 1);
-            }
-
-            if (bytealign)
-            {
-                s0.SetEncoderParameter((int)BrotliEncoderParameter.BROTLI_PARAM_BYTE_ALIGN, 1);
-            }
-
-            s0.Write(bytes, 0, bytes.Length);
+            s0.Write(bytes);
         }
         return compressed.ToArray();
     }
 
-    private byte[] Decompress(Stream compressed)
+    private byte[] Decompress(Stream compressed, bool bare)
     {
-        using var decompressedBrotli = new System.IO.Compression.BrotliStream(compressed, CompressionMode.Decompress);
+        using Stream decompressedBrotli = bare
+            ? new BrotliStream(compressed, CompressionMode.Decompress, bare: bare)
+            : new System.IO.Compression.BrotliStream(compressed, CompressionMode.Decompress);
         using var decompressedStream = new MemoryStream();
         decompressedBrotli.CopyTo(decompressedStream);
         return decompressedStream.ToArray();
@@ -72,56 +54,49 @@ public class BroccoliTests
     public void ByteRoundTrip()
     {
         byte[] content = CreateRandomBytes(100, 64);
-        using var compressed = new MemoryStream(Compress(content, catable: false, appendable: false));
-
-        byte[] decompressed = Decompress(compressed);
+        using var compressed = new MemoryStream(Compress(content, bare: false));
+        byte[] decompressed = Decompress(compressed, bare: false);
         CollectionAssert.AreEqual(content, decompressed);
     }
 
     [TestMethod]
-    public void BroccoliConcatEmpty()
+    public void BareRoundTrip()
     {
-        Broccoli.Concat(
-            window_size: 11,
-            new[]
-            {
-                new MemoryStream(),
-                new MemoryStream(),
-            },
-            new MemoryStream());
-    }
+        byte[] content = CreateRandomBytes(100, 64);
+        var compressed_bare = new MemoryStream(Compress(content, bare: true, window_size: 24));
+        {
+            compressed_bare.Position = 0;
 
-    [TestMethod]
-    public void BareConcatEmpty()
-    {
-        using var compressed = new MemoryStream();
-        compressed.Write(Broccoli.GetStartBlock(11));
-        compressed.Write(Broccoli.EndBlock);
-        compressed.Position = 0;
-        var decompressed = Decompress(compressed);
-        Assert.AreEqual(0, decompressed.Length);
+            var compressed = new MemoryStream();
+            compressed.Write(BrotliStream.GetStartBlock(24));
+            compressed_bare.CopyTo(compressed);
+            compressed.Write(BrotliStream.EndBlock);
+            compressed.Position = 0;
+
+            var decompressed = Decompress(compressed, bare: false);
+            CollectionAssert.AreEqual(content, decompressed);
+        }
+        {
+            compressed_bare.Position = 0;
+            var decompressed = Decompress(compressed_bare, bare: true);
+            CollectionAssert.AreEqual(content, decompressed);
+        }
     }
 
     private void BrotliConcatBlocks(byte compress_window_bits, byte concat_window_bits)
     {
         byte[] content0 = CreateRandomBytes(100, 64);
-        byte[] compressed0 = Compress(content0, catable: true, window_size: compress_window_bits);
-        CollectionAssert.AreEqual(content0, Decompress(new MemoryStream(compressed0)));
+        byte[] compressed0 = Compress(content0, bare: true, window_size: compress_window_bits);
+        CollectionAssert.AreEqual(content0, Decompress(new MemoryStream(compressed0), bare: true));
         byte[] content1 = CreateRandomBytes(100, 64);
-        byte[] compressed1 = Compress(content1, catable: true, window_size: compress_window_bits);
-        CollectionAssert.AreEqual(content1, Decompress(new MemoryStream(compressed1)));
+        byte[] compressed1 = Compress(content1, bare: true, window_size: compress_window_bits);
+        CollectionAssert.AreEqual(content1, Decompress(new MemoryStream(compressed1), bare: true));
 
         using var compressed = new MemoryStream();
-        Broccoli.Concat(
-            concat_window_bits,
-            new[]
-            {
-                new MemoryStream(compressed0),
-                new MemoryStream(compressed1),
-            },
-            compressed);
+        compressed.Write(compressed0);
+        compressed.Write(compressed1);
         compressed.Position = 0;
-        var decompressed = Decompress(compressed);
+        var decompressed = Decompress(compressed, bare: true);
 
         byte[] content = content0.Concat(content1).ToArray();
         CollectionAssert.AreEqual (content, decompressed);
@@ -130,19 +105,19 @@ public class BroccoliTests
     private void BareConcatBlocks(byte compress_window_bits)
     {
         byte[] content0 = CreateRandomBytes(100, 64);
-        byte[] compressed0 = Compress(content0, catable: true, bare: true, bytealign: true, window_size: compress_window_bits);
-        // CollectionAssert.AreEqual(content0, Decompress(new MemoryStream(compressed0)));
+        byte[] compressed0 = Compress(content0, bare: true, window_size: compress_window_bits);
+        CollectionAssert.AreEqual(content0, Decompress(new MemoryStream(compressed0), bare: true));
         byte[] content1 = CreateRandomBytes(100, 64);
-        byte[] compressed1 = Compress(content1, catable: true, bare: true, bytealign: true, window_size: compress_window_bits);
-        // CollectionAssert.AreEqual(content1, Decompress(new MemoryStream(compressed1)));
+        byte[] compressed1 = Compress(content1, bare: true, window_size: compress_window_bits);
+        CollectionAssert.AreEqual(content1, Decompress(new MemoryStream(compressed1), bare: true));
 
         using var compressed = new MemoryStream();
-        compressed.Write(Broccoli.GetStartBlock(compress_window_bits));
+        compressed.Write(BrotliStream.GetStartBlock(compress_window_bits));
         compressed.Write(compressed0);
         compressed.Write(compressed1);
-        compressed.Write(Broccoli.EndBlock);
+        compressed.Write(BrotliStream.EndBlock);
         compressed.Position = 0;
-        var decompressed = Decompress(compressed);
+        var decompressed = Decompress(compressed, bare: false);
 
         byte[] content = content0.Concat(content1).ToArray();
         CollectionAssert.AreEqual(content, decompressed);
@@ -192,100 +167,102 @@ public class BroccoliTests
             while (true)
             {
                 var context = await server.GetContextAsync();
-                using var response = context.Response;
-                if (context.Request.HttpMethod == "POST")
+                Task _ = Task.Run(async () =>
                 {
-                    string expected_hash = context.Request.Url!.AbsolutePath.Substring(1);
-                    byte[] header = Broccoli.GetStartBlock(window_bits);
-                    byte[] footer = Broccoli.EndBlock;
-                    byte[] compressed = new byte[context.Request.ContentLength64 + header.Length + footer.Length];
-                    await context.Request.InputStream.ReadExactlyAsync(compressed);
-                    BrotliStream decompressed = new(new MemoryStream(compressed), CompressionMode.Decompress);
-                    using var sha256 = SHA256.Create();
-                    int bytesRead;
-                    while (0 != (bytesRead = decompressed.Read(buffer)))
+                    using var response = context.Response;
+                    if (context.Request.HttpMethod == "POST")
                     {
-                        sha256.TransformBlock(buffer, 0, bytesRead, null, 0);
-                    }
-                    byte[] hash_bytes = sha256.TransformFinalBlock(buffer, 0, 0);
-                    string hash = Convert.ToHexString(hash_bytes);
-                    if (hash != expected_hash)
-                    {
-                        throw new ArgumentException($"Expected hash {expected_hash}, got {hash}");
-                    }
-                    blocks[expected_hash] = compressed;
-                }
-                else if (context.Request.HttpMethod == "PUT")
-                {
-                    string expected_meta_hash = context.Request.Url!.AbsolutePath.Substring(1);
-                    using StreamReader input = new(context.Request.InputStream);
-                    string? line;
-                    using var sha256 = SHA256.Create();
-                    using var blob_stream = new MemoryStream();
-                    blob_stream.Write(Broccoli.GetStartBlock(window_bits));
-                    while (null != (line = await input.ReadLineAsync()))
-                    {
-                        if (!blocks.TryGetValue(line, out byte[]? block))
+                        string expected_hash = context.Request.Url!.AbsolutePath.Substring(1);
+                        byte[] compressed = new byte[context.Request.ContentLength64];
+                        await context.Request.InputStream.ReadExactlyAsync(compressed);
+                        BrotliStream decompressed = new(new MemoryStream(compressed), CompressionMode.Decompress, bare: true);
+                        using var sha256 = SHA256.Create();
+                        byte[] hash_bytes = sha256.ComputeHash(decompressed);
+                        string hash = Convert.ToHexString(hash_bytes);
+                        if (hash != expected_hash)
                         {
-                            throw new ArgumentException($"Block {line} not found");
+                            throw new ArgumentException($"Expected hash {expected_hash}, got {hash}");
                         }
-                        blob_stream.Write(block);
-                        sha256.TransformBlock(Encoding.UTF8.GetBytes(line), 0, line.Length, null, 0);
+                        blocks[expected_hash] = compressed;
                     }
-                    string meta_hash = Convert.ToHexString(sha256.TransformFinalBlock(buffer, 0, 0));
-                    if (meta_hash != expected_meta_hash)
+                    else if (context.Request.HttpMethod == "PUT")
                     {
-                        throw new ArgumentException($"Expected hash {expected_meta_hash}, got {meta_hash}");
+                        string expected_meta_hash = context.Request.Url!.AbsolutePath.Substring(1);
+                        using StreamReader input = new(context.Request.InputStream);
+                        string? line;
+                        using var sha256 = SHA256.Create();
+                        using var blob_stream = new MemoryStream();
+                        blob_stream.Write(BrotliStream.GetStartBlock(window_bits));
+                        while (null != (line = await input.ReadLineAsync()))
+                        {
+                            if (!blocks.TryGetValue(line, out byte[]? block))
+                            {
+                                throw new ArgumentException($"Block {line} not found");
+                            }
+                            blob_stream.Write(block);
+                            byte[] hex = Convert.FromHexString(line);
+                            sha256.TransformBlock(hex, 0, hex.Length, null, 0);
+                        }
+                        sha256.TransformFinalBlock(buffer, 0, 0);
+                        string meta_hash = Convert.ToHexString(sha256.Hash!);
+                        if (meta_hash != expected_meta_hash)
+                        {
+                            throw new ArgumentException($"Expected hash {expected_meta_hash}, got {meta_hash}");
+                        }
+                        blob_stream.Write(BrotliStream.EndBlock);
+                        await blob_stream.FlushAsync();
+                        blob = blob_stream.ToArray();
                     }
-                    blob_stream.Write(Broccoli.EndBlock);
-                    blob = blob_stream.ToArray();
-                }
-                else if (context.Request.HttpMethod == "GET")
-                {
-                    if (blob == null)
+                    else if (context.Request.HttpMethod == "GET")
                     {
-                        throw new ArgumentException("No blob");
+                        if (blob == null)
+                        {
+                            throw new ArgumentException("No blob");
+                        }
+                        response.ContentLength64 = blob.Length;
+                        response.AddHeader("Content-Encoding", "br");
+                        await response.OutputStream.WriteAsync(blob);
                     }
-                    response.ContentLength64 = blob.Length;
-                    response.AddHeader("Content-Encoding", "br");
-                    await response.OutputStream.WriteAsync(blob);
-                }
-                else
-                {
-                    throw new ArgumentException("Unsupported method");
-                }
+                    else
+                    {
+                        throw new ArgumentException("Unsupported method");
+                    }
 
-                await response.OutputStream.FlushAsync();
-                response.Close();
+                    await response.OutputStream.FlushAsync();
+                    response.Close();
+                });
             }
         });
 
         {
             using var client = new HttpClient();
             var original_blob = new MemoryStream();
-            var hasher = SHA256.Create();
-            (string hash, byte[] compressed)[] client_blocks = Enumerable.Range(0,4).Select(_ => {
+            var meta_hasher = SHA256.Create();
+            (string block_hash, byte[] compressed)[] client_blocks = Enumerable.Range(0,4).Select(_ => {
                 var bytes = CreateRandomBytes(100,64);
                 original_blob.Write(bytes);
-                hasher.TransformBlock(bytes, 0, bytes.Length, null, 0);
-                var hash = Convert.ToBase64String(SHA256.HashData(bytes));
-                var compressed = Compress(bytes, catable: true, bytealign:true, bare: true, window_size: window_bits);
-                return (hash, compressed);
+                byte[] block_hash = SHA256.HashData(bytes);
+                meta_hasher.TransformBlock(block_hash, 0, block_hash.Length, null, 0);
+                var compressed = Compress(bytes, bare: true, window_size: window_bits);
+                return (Convert.ToHexString(block_hash), compressed);
             }).ToArray();
-            string meta_hash = Convert.ToBase64String(hasher.TransformFinalBlock(Array.Empty<byte>(), 0, 0));
+            meta_hasher.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+            string meta_hash = Convert.ToHexString(meta_hasher.Hash!);
 
-            foreach ((string hash, byte[] compressed) in client_blocks)
+            foreach ((string block_hash, byte[] compressed) in client_blocks)
             {
-                using var request = new HttpRequestMessage(HttpMethod.Post, uri + hash)
+                using var request = new HttpRequestMessage(HttpMethod.Post, uri + block_hash)
                 {
                     Content = new ByteArrayContent(compressed)
                 };
-                await client.SendAsync(request);
+                (await client.SendAsync(request)).EnsureSuccessStatusCode();
             }
 
-            await client.PutAsync(uri + meta_hash, new StringContent(string.Join("\n", client_blocks.Select(x => x.hash))));
+            await client.PutAsync(uri + meta_hash, new StringContent(string.Join("\n", client_blocks.Select(x => x.block_hash))));
+
             using var response = await client.GetAsync(uri + meta_hash);
-            byte[] decompressed = await response.Content.ReadAsByteArrayAsync();
+            response.EnsureSuccessStatusCode();
+            byte[] decompressed = Decompress(await response.Content.ReadAsStreamAsync(), bare: false);
             CollectionAssert.AreEqual(original_blob.ToArray(), decompressed);
         }
     }

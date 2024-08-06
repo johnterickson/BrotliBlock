@@ -1,0 +1,244 @@
+﻿// BitArray 
+
+using BroccoliStream = NetFxLab.IO.Compression.BrotliStream;
+using BrotliEncoderParameter = NetFxLab.IO.Compression.BrotliEncoderParameter;
+using System.IO.Compression;
+using broccoli_sharp;
+
+class BroccoliApp
+{
+    private static void DisplayUsage()
+    {
+        Console.WriteLine("broccoli [-w window_bits] [-q quality] [-b (bare)] [-c (compress)]");
+        Console.WriteLine("[-o output_path (stdout defaut, use '{}' for block index)]");
+        Console.WriteLine("[--block-size block_size] [--buffer-size buffer_size]");
+        Console.WriteLine("input_paths or --");
+    }
+
+    public static void Main(string[] argsArray)
+    {
+        uint window_bits = 22;
+        uint quality = 11;
+        bool compress = false;
+        bool bare = false;
+        uint block_size = 0;
+        uint buffer_size = 81920;
+
+        var args = new Queue<string>(argsArray);
+
+        Queue<Stream> inputs = new();
+        string? output_path = null;
+
+        while (args.Count > 0 && args.Peek().StartsWith('-') && args.Peek() != "--")
+        {
+            string arg = args.Dequeue();
+            switch (arg)
+            {
+                case "-w":
+                    window_bits = uint.Parse(args.Dequeue());
+                    break;
+                case "-q":
+                    quality = uint.Parse(args.Dequeue());
+                    break;
+                case "-o":
+                    output_path = args.Dequeue();
+                    break;
+                case "-c":
+                    compress = true;
+                    break;
+                case "-b":
+                    bare = true;
+                    break;
+                case "--block-size":
+                    block_size = uint.Parse(args.Dequeue());
+                    break;
+                case "--buffer-size":
+                    buffer_size = uint.Parse(args.Dequeue());
+                    break;
+                case "-?":
+                case "--help":
+                    DisplayUsage();
+                    return;
+                default:
+                    DisplayUsage();
+                    throw new ArgumentException($"unknown arg '{arg}'.");
+            }
+        }
+
+        if (!compress && bare)
+        {
+            inputs.Enqueue(new MemoryStream(Broccoli.GetStartBlock((byte)window_bits)));
+        }
+
+        while (args.Count > 0)
+        {
+            string arg = args.Dequeue();
+            if (arg == "--")
+            {
+                inputs.Enqueue(Console.OpenStandardInput());
+            }
+            else if (arg.Contains('*'))
+            {
+                string? dir = Path.GetDirectoryName(arg);
+                if (string.IsNullOrEmpty(dir))
+                {
+                    dir = Environment.CurrentDirectory;
+                }
+                foreach (string file in Directory.GetFiles(
+                    dir,
+                    Path.GetFileName(arg) ?? arg))
+                {
+                    Console.Error.WriteLine($"Processing {file}...");
+                    inputs.Enqueue(File.OpenRead(file));
+                }
+            }
+            else
+            {
+                inputs.Enqueue(File.OpenRead(arg));
+            }
+        }
+
+        if (inputs.Count == 0)
+        {
+            inputs.Enqueue(Console.OpenStandardInput());
+        }
+
+        if (!compress && bare)
+        {
+            inputs.Enqueue(new MemoryStream(Broccoli.EndBlock));
+        }
+
+        output_path ??= "--";
+
+        if (compress)
+        {
+            if (block_size > 0 && output_path == "--")
+            {
+                throw new ArgumentException("Specify output path pattern when using block size.");
+            }
+
+            uint index = 0;
+            int bytes_read_in_block = 0;
+            byte[] buffer = new byte[buffer_size];
+            BroccoliStream? compressed = null;
+            Stream current_input = inputs.Dequeue();
+
+            while (true)
+            {
+                if (compressed == null)
+                {
+                    Stream output;
+                    if (block_size > 0) {
+                        output = File.OpenWrite(output_path.Replace("{}", index.ToString("D3")));
+                    }
+                    else
+                    {
+                        output = output_path == "--" ? Console.OpenStandardOutput() : File.OpenWrite(output_path);
+                    }
+
+                    compressed = new BroccoliStream(output, CompressionMode.Compress, quality: quality, window_bits: window_bits);
+
+                    if (bare)
+                    {
+                        compressed.SetEncoderParameter((int)BrotliEncoderParameter.BROTLI_PARAM_CATABLE, 1);
+                        compressed.SetEncoderParameter((int)BrotliEncoderParameter.BROTLI_PARAM_BARE_STREAM, 1);
+                        compressed.SetEncoderParameter((int)BrotliEncoderParameter.BROTLI_PARAM_BYTE_ALIGN, 1);
+                        compressed.SetEncoderParameter((int)BrotliEncoderParameter.BROTLI_PARAM_MAGIC_NUMBER, 1);
+                    }
+                }
+
+                int bytes_to_read;
+                if (block_size > 0)
+                {
+                    bytes_to_read = (int)Math.Min(buffer.Length, block_size - bytes_read_in_block);
+                }
+                else
+                {
+                    bytes_to_read = buffer.Length;
+                }
+                int bytes_read = current_input.Read(buffer, 0, Math.Min(buffer.Length, bytes_to_read));
+                compressed.Write(buffer, 0, bytes_read);
+                bytes_read_in_block += bytes_read;
+                
+                if (block_size > 0 && bytes_read_in_block == block_size)
+                {
+                    compressed.Dispose();
+                    compressed = null;
+                    bytes_read_in_block = 0;
+                    index++;
+                    continue;
+                }
+
+                if (bytes_read == 0)
+                {
+                    current_input.Dispose();
+                    if (inputs.Count == 0)
+                    {
+                        compressed.Dispose();
+                        break;
+                    }
+                    current_input = inputs.Dequeue();
+                }
+            }
+        }
+        else
+        {
+            if (block_size > 0)
+            {
+                throw new ArgumentException("Block size not supported in decompression mode.");
+            }
+            
+            using Stream output = output_path == "--" ? Console.OpenStandardOutput() : File.OpenWrite(output_path);
+            using var decompressed = new BrotliStream(new ConcatenatedStream(inputs), CompressionMode.Decompress);
+            decompressed.CopyTo(output);
+        }
+    }
+
+    class ConcatenatedStream : Stream
+    {
+        private readonly Queue<Stream> streams;
+
+        public ConcatenatedStream(Queue<Stream> streams)
+        {
+            this.streams = streams;
+        }
+
+        public override bool CanRead => true;
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            int totalBytesRead = 0;
+
+            while (count > 0 && streams.Count > 0)
+            {
+                int bytesRead = streams.Peek().Read(buffer, offset, count);
+                if (bytesRead == 0)
+                {
+                    streams.Dequeue().Dispose();
+                    continue;
+                }
+
+                totalBytesRead += bytesRead;
+                offset += bytesRead;
+                count -= bytesRead;
+            }
+
+            return totalBytesRead;
+        }
+
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override void Flush() => throw new NotImplementedException();
+        public override long Length => throw new NotImplementedException();
+
+        public override long Position
+        {
+            get => throw new NotImplementedException();
+            set => throw new NotImplementedException();
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotImplementedException();
+        public override void SetLength(long value) => throw new NotImplementedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotImplementedException();
+    }
+}

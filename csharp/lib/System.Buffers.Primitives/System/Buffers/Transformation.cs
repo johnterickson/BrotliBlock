@@ -13,6 +13,8 @@ namespace System.Buffers
         Done,
         DestinationTooSmall,
         NeedMoreSourceData,
-        InvalidData // TODO: how do we communicate details of the error
+        InvalidData, // TODO: how do we communicate details of the error
+        ReadBareStartBlock,
+        ReadBareEndBlock,
     }
 }
