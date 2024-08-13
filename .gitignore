@@ -1,4 +1,2 @@
 .vs
-**/obj
-**/bin
 .vscode/settings.json
