@@ -2,15 +2,9 @@
 using System.IO.Compression;
 using NetFxLab.IO.Compression.Resources;
 
-#if BIT64
-    using nuint = System.UInt64;
-#else
-    using nuint = System.UInt32;
-#endif 
-
 namespace NetFxLab.IO.Compression
 {
-    public static class Brotli
+    internal static class Brotli
     {
         internal const int MinWindowBits = 10;
         internal const int MaxWindowBits = 24;

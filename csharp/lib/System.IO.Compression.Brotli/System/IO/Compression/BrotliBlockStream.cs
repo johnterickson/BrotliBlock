@@ -5,15 +5,9 @@ using System.Buffers;
 using System.IO.Compression;
 using NetFxLab.IO.Compression.Resources;
 
-#if BIT64
-    using nuint = System.UInt64;
-#else
-    using nuint = System.UInt32;
-#endif 
-
 namespace NetFxLab.IO.Compression
 {
-    public partial class BrotliStream : Stream
+    public partial class BrotliBlockStream : Stream
     {
         private const int DefaultBufferSize = (1 << 16) - 16; //65520
         private int _bufferSize;
@@ -44,7 +38,7 @@ namespace NetFxLab.IO.Compression
         private static byte[] CreateStartBlock(byte window_size)
         {
             using var compressed = new MemoryStream();
-            using (var s0 = new BrotliStream(compressed, CompressionMode.Compress, window_bits: window_size, 
+            using (var s0 = new BrotliBlockStream(compressed, CompressionMode.Compress, window_bits: window_size, 
                 appendable: true, byte_align: true, bare: true, leaveOpen: true))
             {
                 // empty
@@ -55,7 +49,7 @@ namespace NetFxLab.IO.Compression
 
         public static byte[] GetStartBlock(byte window_size) => StartBlocks[window_size].Value;
 
-        private BrotliStream(Stream baseStream, CompressionMode mode, bool leaveOpen, int bufferSize, CompressionLevel quality) : this(baseStream, mode, leaveOpen, bufferSize)
+        private BrotliBlockStream(Stream baseStream, CompressionMode mode, bool leaveOpen, int bufferSize, CompressionLevel quality) : this(baseStream, mode, leaveOpen, bufferSize)
         {
             if (_mode == CompressionMode.Compress)
             {
@@ -63,7 +57,7 @@ namespace NetFxLab.IO.Compression
             }
         }
 
-        private BrotliStream(Stream baseStream, CompressionMode mode, bool leaveOpen, int bufferSize, CompressionLevel quality, uint windowSize) : this(baseStream, mode, leaveOpen, bufferSize)
+        private BrotliBlockStream(Stream baseStream, CompressionMode mode, bool leaveOpen, int bufferSize, CompressionLevel quality, uint windowSize) : this(baseStream, mode, leaveOpen, bufferSize)
         {
             if (_mode == CompressionMode.Compress)
             {
@@ -72,21 +66,21 @@ namespace NetFxLab.IO.Compression
             }
         }
 
-        public static BrotliStream CreateDecompressionStream(
+        public static BrotliBlockStream CreateDecompressionStream(
             Stream compressed, int bufferSize = DefaultBufferSize, bool leaveOpen = false,
             bool needs_start_block = false, bool needs_end_block = false, 
             uint window_bits = 24) 
             =>
-            new BrotliStream(compressed, CompressionMode.Decompress, leaveOpen: leaveOpen, needs_start_block: needs_start_block, needs_end_block: needs_end_block, window_bits: window_bits);
+            new BrotliBlockStream(compressed, CompressionMode.Decompress, leaveOpen: leaveOpen, needs_start_block: needs_start_block, needs_end_block: needs_end_block, window_bits: window_bits);
 
-        public static BrotliStream CreateCompressionStream(
+        public static BrotliBlockStream CreateCompressionStream(
             Stream compressed, int bufferSize = DefaultBufferSize, bool leaveOpen = false,
             uint quality = 11, uint window_bits = 24,
             bool bare = false, bool catable = false, bool appendable = false, bool byte_align = false, bool magic = false)
             =>
-            new BrotliStream(compressed, CompressionMode.Compress, leaveOpen: leaveOpen, bufferSize: bufferSize, quality: quality, window_bits: window_bits, bare: bare, catable: catable, appendable: appendable, byte_align: byte_align, magic: magic);
+            new BrotliBlockStream(compressed, CompressionMode.Compress, leaveOpen: leaveOpen, bufferSize: bufferSize, quality: quality, window_bits: window_bits, bare: bare, catable: catable, appendable: appendable, byte_align: byte_align, magic: magic);
 
-        private BrotliStream(Stream baseStream, CompressionMode mode, bool leaveOpen = false, int bufferSize = DefaultBufferSize,
+        private BrotliBlockStream(Stream baseStream, CompressionMode mode, bool leaveOpen = false, int bufferSize = DefaultBufferSize,
             uint quality = 11, uint window_bits = 24, bool bare = false, bool catable = false, bool appendable = false, bool byte_align = false,
             bool magic = false, bool needs_start_block = false, bool needs_end_block = false)
         {

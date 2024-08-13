@@ -3,12 +3,6 @@
 // See the LICENSE file in the project root for more information.
 using System.Runtime.InteropServices;
 
-#if BIT64
-    using nuint = System.UInt64;
-#else
-    using nuint = System.UInt32;
-#endif 
-
 namespace NetFxLab.IO.Compression
 {
     ///  /// <summary>
@@ -33,7 +27,7 @@ namespace NetFxLab.IO.Compression
     /// LCModeling-  Flag that affects usage of "literal context modeling" format feature. This flag is a "decoding-speed vs compression ratio" trade-off.
     /// SizeHint - Estimated total input size for all ::BrotliEncoderCompressStream calls. The default value is 0, which means that the total input size is unknown.
     /// </summary>
-    public enum BrotliEncoderParameter
+    internal enum BrotliEncoderParameter
     {
         Mode,
         Quality,

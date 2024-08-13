@@ -1,9 +1,7 @@
 ﻿// BitArray 
 
-using BroccoliStream = NetFxLab.IO.Compression.BrotliStream;
-using BrotliEncoderParameter = NetFxLab.IO.Compression.BrotliEncoderParameter;
+using NetFxLab.IO.Compression;
 using System.IO.Compression;
-using broccoli_sharp;
 
 class BroccoliApp
 {
@@ -65,11 +63,6 @@ class BroccoliApp
             }
         }
 
-        if (!compress && bare)
-        {
-            inputs.Enqueue(new MemoryStream(Broccoli.GetStartBlock((byte)window_bits)));
-        }
-
         while (args.Count > 0)
         {
             string arg = args.Dequeue();
@@ -103,11 +96,6 @@ class BroccoliApp
             inputs.Enqueue(Console.OpenStandardInput());
         }
 
-        if (!compress && bare)
-        {
-            inputs.Enqueue(new MemoryStream(Broccoli.EndBlock));
-        }
-
         output_path ??= "--";
 
         if (compress)
@@ -120,7 +108,7 @@ class BroccoliApp
             uint index = 0;
             int bytes_read_in_block = 0;
             byte[] buffer = new byte[buffer_size];
-            BroccoliStream? compressed = null;
+            BrotliBlockStream? compressed = null;
             Stream current_input = inputs.Dequeue();
 
             while (true)
@@ -136,15 +124,8 @@ class BroccoliApp
                         output = output_path == "--" ? Console.OpenStandardOutput() : File.OpenWrite(output_path);
                     }
 
-                    compressed = new BroccoliStream(output, CompressionMode.Compress, quality: quality, window_bits: window_bits);
-
-                    if (bare)
-                    {
-                        compressed.SetEncoderParameter((int)BrotliEncoderParameter.BROTLI_PARAM_CATABLE, 1);
-                        compressed.SetEncoderParameter((int)BrotliEncoderParameter.BROTLI_PARAM_BARE_STREAM, 1);
-                        compressed.SetEncoderParameter((int)BrotliEncoderParameter.BROTLI_PARAM_BYTE_ALIGN, 1);
-                        compressed.SetEncoderParameter((int)BrotliEncoderParameter.BROTLI_PARAM_MAGIC_NUMBER, 1);
-                    }
+                    compressed = BrotliBlockStream.CreateCompressionStream(output, quality: quality, window_bits: window_bits,
+                        catable: bare, bare: bare, byte_align: bare, magic: bare);
                 }
 
                 int bytes_to_read;
@@ -189,7 +170,10 @@ class BroccoliApp
             }
             
             using Stream output = output_path == "--" ? Console.OpenStandardOutput() : File.OpenWrite(output_path);
-            using var decompressed = new BrotliStream(new ConcatenatedStream(inputs), CompressionMode.Decompress);
+            using ConcatenatedStream input_stream = new(inputs);
+            using Stream decompressed = bare
+                ? BrotliBlockStream.CreateDecompressionStream(input_stream, window_bits: window_bits, needs_start_block: true, needs_end_block: true)
+                : new BrotliStream(input_stream, CompressionMode.Decompress);
             decompressed.CopyTo(output);
         }
     }

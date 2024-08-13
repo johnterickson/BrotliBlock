@@ -5,12 +5,6 @@ using System.Runtime.InteropServices;
 
 #pragma warning disable CS8981 // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
 
-#if BIT64
-using nuint = System.UInt64;
-#else
-using nuint = System.UInt32;
-#endif
-
 namespace NetFxLab.IO.Compression
 {
     internal static partial class Interop

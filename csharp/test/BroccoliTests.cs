@@ -1,6 +1,6 @@
 namespace test;
 
-using BrotliStream = NetFxLab.IO.Compression.BrotliStream;
+using NetFxLab.IO.Compression;
 using System.Net;
 using System.Security.Cryptography;
 using System.Net.Sockets;
@@ -56,9 +56,9 @@ public class BroccoliTests
             compressed_bare.Position = 0;
 
             var compressed = new MemoryStream();
-            compressed.Write(BrotliStream.GetStartBlock(24));
+            compressed.Write(BrotliBlockStream.GetStartBlock(24));
             compressed_bare.CopyTo(compressed);
-            compressed.Write(BrotliStream.EndBlock);
+            compressed.Write(BrotliBlockStream.EndBlock);
             compressed.Position = 0;
 
             var decompressed = BrotliBlocks.Decompress(compressed);
@@ -100,10 +100,10 @@ public class BroccoliTests
         CollectionAssert.AreEqual(content1, BrotliBlocks.Decompress(new MemoryStream(compressed1), BlockPosition.Middle));
 
         using var compressed = new MemoryStream();
-        compressed.Write(BrotliStream.GetStartBlock(compress_window_bits));
+        compressed.Write(BrotliBlockStream.GetStartBlock(compress_window_bits));
         compressed.Write(compressed0);
         compressed.Write(compressed1);
-        compressed.Write(BrotliStream.EndBlock);
+        compressed.Write(BrotliBlockStream.EndBlock);
         compressed.Position = 0;
         var decompressed = BrotliBlocks.Decompress(compressed);
 
