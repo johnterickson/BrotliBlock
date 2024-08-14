@@ -1,5 +1,6 @@
 ﻿// BitArray 
 
+using BrotliBlock;
 using NetFxLab.IO.Compression;
 using System.IO.Compression;
 
@@ -7,7 +8,8 @@ static class BrotliBlockApp
 {
     private static void DisplayUsage()
     {
-        Console.WriteLine("BrotliBlock [-w window_bits] [-q quality] [-b (bare)] [-c (compress)]");
+        Console.WriteLine("BrotliBlock [-w window_bits] [-q quality] [-c (compress)]");
+        Console.WriteLine("[--position [First|Middle|Last] [-b (bare)]");
         Console.WriteLine("[-o output_path (stdout defaut, use '{}' for block index)]");
         Console.WriteLine("[--block-size block_size] [--buffer-size buffer_size]");
         Console.WriteLine("input_paths or --");
@@ -18,9 +20,9 @@ static class BrotliBlockApp
         uint window_bits = 22;
         uint quality = 11;
         bool compress = false;
-        bool bare = false;
         uint block_size = 0;
         uint buffer_size = 81920;
+        BlockPosition? blockPosition = null;
 
         var args = new Queue<string>(argsArray);
 
@@ -45,7 +47,11 @@ static class BrotliBlockApp
                     compress = true;
                     break;
                 case "-b":
-                    bare = true;
+                    blockPosition = BlockPosition.Middle;
+                    break;
+                case "-p":
+                case "--position":
+                    blockPosition = Enum.Parse<BlockPosition>(args.Dequeue());
                     break;
                 case "--block-size":
                     block_size = uint.Parse(args.Dequeue());
@@ -108,8 +114,10 @@ static class BrotliBlockApp
             uint index = 0;
             int bytes_read_in_block = 0;
             byte[] buffer = new byte[buffer_size];
-            BrotliBlockStream? compressed = null;
+            (Stream raw, BrotliBlockStream brotli)? compressed = null;
             Stream current_input = inputs.Dequeue();
+
+            bool bare = blockPosition.HasValue;
 
             while (true)
             {
@@ -124,8 +132,13 @@ static class BrotliBlockApp
                         output = output_path == "--" ? Console.OpenStandardOutput() : File.OpenWrite(output_path);
                     }
 
-                    compressed = BrotliBlockStream.CreateCompressionStream(output, quality: quality, window_bits: window_bits,
-                        catable: bare, bare: bare, byte_align: bare, magic: bare);
+                    if (blockPosition == BlockPosition.First)
+                    {
+                        output.Write(BrotliBlockStream.GetStartBlock((byte)window_bits));
+                    }
+
+                    compressed = (output, BrotliBlockStream.CreateCompressionStream(output, quality: quality, window_bits: window_bits,
+                        catable: bare, bare: bare, byte_align: bare, magic: bare, leaveOpen: true));
                 }
 
                 int bytes_to_read;
@@ -138,12 +151,13 @@ static class BrotliBlockApp
                     bytes_to_read = buffer.Length;
                 }
                 int bytes_read = current_input.Read(buffer, 0, Math.Min(buffer.Length, bytes_to_read));
-                compressed.Write(buffer, 0, bytes_read);
+                compressed.Value.brotli.Write(buffer, 0, bytes_read);
                 bytes_read_in_block += bytes_read;
                 
                 if (block_size > 0 && bytes_read_in_block == block_size)
                 {
-                    compressed.Dispose();
+                    compressed.Value.brotli.Dispose();
+                    compressed.Value.raw.Dispose();
                     compressed = null;
                     bytes_read_in_block = 0;
                     index++;
@@ -155,7 +169,15 @@ static class BrotliBlockApp
                     current_input.Dispose();
                     if (inputs.Count == 0)
                     {
-                        compressed.Dispose();
+                        compressed.Value.brotli.Dispose();
+
+                        if (blockPosition == BlockPosition.Last)
+                        {
+                            compressed.Value.raw.Write(BrotliBlockStream.EndBlock);
+                        }
+                        
+                        compressed.Value.raw.Dispose();
+
                         break;
                     }
                     current_input = inputs.Dequeue();
@@ -171,8 +193,10 @@ static class BrotliBlockApp
             
             using Stream output = output_path == "--" ? Console.OpenStandardOutput() : File.OpenWrite(output_path);
             using ConcatenatedStream input_stream = new(inputs);
-            using Stream decompressed = bare
-                ? BrotliBlockStream.CreateDecompressionStream(input_stream, window_bits: window_bits, needs_start_block: true, needs_end_block: true)
+            using Stream decompressed = blockPosition.HasValue
+                ? BrotliBlockStream.CreateDecompressionStream(input_stream, window_bits: window_bits, 
+                    needs_start_block: blockPosition != BlockPosition.First,
+                    needs_end_block: blockPosition != BlockPosition.Last)
                 : new BrotliStream(input_stream, CompressionMode.Decompress);
             decompressed.CopyTo(output);
         }
