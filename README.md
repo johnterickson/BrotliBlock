@@ -8,7 +8,7 @@ Ok this is really cool! We have a scenario that is similar to https://dropbox.te
 ## What is this?
 This library (and toy app) lets you split a file into blocks, compress each block individually, store each block individually, decompress each block individually, but ALSO you can byte-concatenate the compressed blocks to create a stream that is standard `brotli` stream that can be decompressed by normal tools (e.g. `curl`, `brotli -d`).
 
-### Compressed lock types
+### Compressed block types
 
 The root of the idea is to separate the creation of brotli a) header, b) content, and c) EOF marker.
 
@@ -18,6 +18,7 @@ echo hello>hello.txt
 echo world>world.txt
 ```
 
+### Option 1: Only create bare/Middle blocks
 The simplest approach is to only create "bare" blocks - blocks with neither the header nor the EOF marker:
 ```
 BrotliBlock -b -c -o hello.txt.br.bare hello.txt
@@ -36,6 +37,7 @@ hello
 world
 ```
 
+### Option 2: First/Middle/Last blocks and byte-wise concatenation
 Usually, though, we know which is the first block and which is the last block and we can add the header to the beginning of the first block, add the EOF to the end of the last block, and leave the middle blocks as bare:
 ```
 BrotliBlock.exe -c -o hello.txt.br.first --position First hello.txt
@@ -44,6 +46,10 @@ BrotliBlock.exe -c -o world.txt.br.last --position Last world.txt
 And the concatenation decompresses normally:
 ```
 BrotliBlock.exe hello.txt.br.first world.txt.br.last
+hello
+world
+
+$ cat hello.txt.br.first world.txt.br.last | brotli -d
 hello
 world
 ```
