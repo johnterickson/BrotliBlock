@@ -7,12 +7,12 @@ using System.Runtime.CompilerServices;
 
 namespace System.Buffers
 {
-    public abstract class OwnedBuffer<T> : IDisposable, IRetainable
+    internal abstract class OwnedBuffer<T> : IDisposable, IRetainable
     {
         protected OwnedBuffer() { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator OwnedBuffer<T>(T[] array)
+        internal static OwnedBuffer<T> From(T[] array)
         {
             return new Internal.OwnedArray<T>(array);
         }

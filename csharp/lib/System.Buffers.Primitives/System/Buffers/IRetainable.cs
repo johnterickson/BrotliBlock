@@ -3,7 +3,7 @@
 
 namespace System.Buffers
 {
-    public interface IRetainable
+    internal interface IRetainable
     {
         void Retain();
         void Release();

@@ -3,12 +3,12 @@
 
 namespace System.Buffers
 {
-    public abstract class Transformation
+    internal abstract class Transformation
     {
         public abstract TransformationStatus Transform(ReadOnlySpan<byte> source, Span<byte> destination, out int bytesConsumed, out int bytesWritten);
     }
 
-    public enum TransformationStatus
+    internal enum TransformationStatus
     {
         Done,
         DestinationTooSmall,

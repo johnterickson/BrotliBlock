@@ -3,7 +3,7 @@
 
 namespace System.Buffers
 {
-    public abstract class BufferPool : IDisposable
+    internal abstract class BufferPool : IDisposable
     {
         public static BufferPool Default => Internal.ManagedBufferPool.Shared;
 

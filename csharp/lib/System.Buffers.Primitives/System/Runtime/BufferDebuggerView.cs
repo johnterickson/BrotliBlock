@@ -11,7 +11,7 @@ namespace System.Runtime
 
         public BufferDebuggerView(Buffer<T> buffer)
         {
-            _buffer = buffer;
+            _buffer = buffer.ToReadOnly();
         }
 
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]

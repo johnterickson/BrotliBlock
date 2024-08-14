@@ -4,7 +4,7 @@
 namespace System.Runtime
 {
     [AttributeUsage(AttributeTargets.GenericParameter)]
-    public sealed class PrimitiveAttribute : Attribute
+    internal sealed class PrimitiveAttribute : Attribute
     {
     }
 }

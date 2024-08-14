@@ -3,11 +3,12 @@
 // See the LICENSE file in the project root for more information.
 using System.Buffers;
 using System.IO.Compression;
+using NetFxLab.IO.Compression;
 using NetFxLab.IO.Compression.Resources;
 
-namespace NetFxLab.IO.Compression
+namespace BrotliBlock
 {
-    public partial class BrotliBlockStream : Stream
+    public class BrotliBlockStream : Stream
     {
         private const int DefaultBufferSize = (1 << 16) - 16; //65520
         private int _bufferSize;
@@ -17,7 +18,6 @@ namespace NetFxLab.IO.Compression
         private int _availableInput;
         private byte[] _buffer;
         private bool _leaveOpen;
-        private int totalWrote;
         private Brotli.State _state;
         private TransformationStatus _transformationResult;
         private readonly bool _needs_end_block;
@@ -320,8 +320,6 @@ namespace NetFxLab.IO.Compression
             EnsureCompressionMode();
             ValidateParameters(buffer, offset, count);
             EnsureNotDisposed();
-            if (_mode != CompressionMode.Compress)
-                totalWrote += count;
             DateTime begin = DateTime.Now;
             int bytesRemain = count;
             int currentOffset = offset;

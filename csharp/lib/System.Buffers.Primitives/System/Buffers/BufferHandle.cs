@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace System.Buffers
 {
-    public unsafe struct BufferHandle : IDisposable
+    internal unsafe struct BufferHandle : IDisposable
     {
         IRetainable _owner;
         void* _pointer;

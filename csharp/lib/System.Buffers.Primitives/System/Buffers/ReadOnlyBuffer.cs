@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 namespace System
 {
     [DebuggerTypeProxy(typeof(ReadOnlyBufferDebuggerView<>))]
-    public struct ReadOnlyBuffer<T>
+    internal struct ReadOnlyBuffer<T>
     {
         readonly OwnedBuffer<T> _owner;
         readonly T[] _array;
@@ -78,18 +78,18 @@ namespace System
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator ReadOnlyBuffer<T>(T[] array)
+        internal static ReadOnlyBuffer<T> From(T[] array)
         {
             return new ReadOnlyBuffer<T>(array, 0, array.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator ReadOnlyBuffer<T>(ArraySegment<T> arraySegment)
+        internal static ReadOnlyBuffer<T> From(ArraySegment<T> arraySegment)
         {
             return new ReadOnlyBuffer<T>(arraySegment.Array, arraySegment.Offset, arraySegment.Count);
         }
 
-        public static ReadOnlyBuffer<T> Empty { get; } = OwnedBuffer<T>.EmptyArray;
+        internal static ReadOnlyBuffer<T> Empty { get; } = From(OwnedBuffer<T>.EmptyArray);
 
         public int Length => _length;
 

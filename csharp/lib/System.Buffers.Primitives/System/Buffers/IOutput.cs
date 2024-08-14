@@ -3,7 +3,7 @@
 
 namespace System.Buffers
 {
-    public interface IOutput
+    internal interface IOutput
     {
         Span<byte> Buffer { get; }
         void Advance(int bytes);

@@ -4,7 +4,7 @@
 
 namespace System.Buffers
 {
-    public static class BufferExtensions
+    internal static class BufferExtensions
     {
         public static bool SequenceEqual<T>(this Buffer<T> first, Buffer<T> second) where T : struct, IEquatable<T>
         {
