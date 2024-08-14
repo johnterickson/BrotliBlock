@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../lib/broccoli-sharp.csproj" />
+    <ProjectReference Include="../lib/BrotliBlockLib.csproj" />
   </ItemGroup>
 
 </Project>

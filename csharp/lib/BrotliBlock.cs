@@ -1,7 +1,7 @@
 ﻿using System.IO.Compression;
 using NetFxLab.IO.Compression;
 
-namespace broccoli_sharp;
+namespace BrotliBlock;
 
 /*
 https://github.com/dropbox/rust-brotli/pull/49#issuecomment-1804633560
@@ -31,7 +31,7 @@ public enum BlockPosition
     Last
 }
 
-public static class BrotliBlocks
+public static class BrotliBlock
 {
     public static byte[] CompressBlock(byte[] bytes, BlockPosition position, byte window_size = 22)
     {

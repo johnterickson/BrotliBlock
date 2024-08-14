@@ -4,10 +4,10 @@ using NetFxLab.IO.Compression;
 using System.Net;
 using System.Security.Cryptography;
 using System.Net.Sockets;
-using broccoli_sharp;
+using BrotliBlock;
 
 [TestClass]
-public class BroccoliTests
+public class BrotliBlockTests
 {
     private readonly Random random = new Random();
 
@@ -29,8 +29,8 @@ public class BroccoliTests
     public void ByteRoundTrip()
     {
         byte[] content = CreateRandomBytes(100, 64);
-        byte[] compressed = BrotliBlocks.Compress(content, bare: false);
-        byte[] decompressed = BrotliBlocks.Decompress(new MemoryStream(compressed));
+        byte[] compressed = BrotliBlock.Compress(content, bare: false);
+        byte[] decompressed = BrotliBlock.Decompress(new MemoryStream(compressed));
         CollectionAssert.AreEqual(content, decompressed);
     }
 
@@ -41,8 +41,8 @@ public class BroccoliTests
 
         foreach (BlockPosition position in Enum.GetValues<BlockPosition>())
         {
-            using var compressed = new MemoryStream(BrotliBlocks.CompressBlock(content, position, window_size: 24));
-            byte[] decompressed = BrotliBlocks.Decompress(compressed, position, window_size: 24);
+            using var compressed = new MemoryStream(BrotliBlock.CompressBlock(content, position, window_size: 24));
+            byte[] decompressed = BrotliBlock.Decompress(compressed, position, window_size: 24);
             CollectionAssert.AreEqual(content, decompressed);
         }
     }
@@ -51,7 +51,7 @@ public class BroccoliTests
     public void BareRoundTrip()
     {
         byte[] content = CreateRandomBytes(100, 64);
-        var compressed_bare = new MemoryStream(BrotliBlocks.Compress(content, bare: true, window_size: 24));
+        var compressed_bare = new MemoryStream(BrotliBlock.Compress(content, bare: true, window_size: 24));
         {
             compressed_bare.Position = 0;
 
@@ -61,12 +61,12 @@ public class BroccoliTests
             compressed.Write(BrotliBlockStream.EndBlock);
             compressed.Position = 0;
 
-            var decompressed = BrotliBlocks.Decompress(compressed);
+            var decompressed = BrotliBlock.Decompress(compressed);
             CollectionAssert.AreEqual(content, decompressed);
         }
         {
             compressed_bare.Position = 0;
-            var decompressed = BrotliBlocks.Decompress(compressed_bare, BlockPosition.Middle);
+            var decompressed = BrotliBlock.Decompress(compressed_bare, BlockPosition.Middle);
             CollectionAssert.AreEqual(content, decompressed);
         }
     }
@@ -74,17 +74,17 @@ public class BroccoliTests
     private void BrotliConcatBlocks(byte compress_window_bits, byte concat_window_bits)
     {
         byte[] content0 = CreateRandomBytes(100, 64);
-        byte[] compressed0 = BrotliBlocks.Compress(content0, bare: true, window_size: compress_window_bits);
-        CollectionAssert.AreEqual(content0, BrotliBlocks.Decompress(new MemoryStream(compressed0), BlockPosition.Middle));
+        byte[] compressed0 = BrotliBlock.Compress(content0, bare: true, window_size: compress_window_bits);
+        CollectionAssert.AreEqual(content0, BrotliBlock.Decompress(new MemoryStream(compressed0), BlockPosition.Middle));
         byte[] content1 = CreateRandomBytes(100, 64);
-        byte[] compressed1 = BrotliBlocks.Compress(content1, bare: true, window_size: compress_window_bits);
-        CollectionAssert.AreEqual(content1, BrotliBlocks.Decompress(new MemoryStream(compressed1), BlockPosition.Middle));
+        byte[] compressed1 = BrotliBlock.Compress(content1, bare: true, window_size: compress_window_bits);
+        CollectionAssert.AreEqual(content1, BrotliBlock.Decompress(new MemoryStream(compressed1), BlockPosition.Middle));
 
         using var compressed = new MemoryStream();
         compressed.Write(compressed0);
         compressed.Write(compressed1);
         compressed.Position = 0;
-        var decompressed = BrotliBlocks.Decompress(compressed, BlockPosition.Middle);
+        var decompressed = BrotliBlock.Decompress(compressed, BlockPosition.Middle);
 
         byte[] content = content0.Concat(content1).ToArray();
         CollectionAssert.AreEqual (content, decompressed);
@@ -93,11 +93,11 @@ public class BroccoliTests
     private void BareConcatBlocks(byte compress_window_bits)
     {
         byte[] content0 = CreateRandomBytes(100, 64);
-        byte[] compressed0 = BrotliBlocks.Compress(content0, bare: true, window_size: compress_window_bits);
-        CollectionAssert.AreEqual(content0, BrotliBlocks.Decompress(new MemoryStream(compressed0), BlockPosition.Middle));
+        byte[] compressed0 = BrotliBlock.Compress(content0, bare: true, window_size: compress_window_bits);
+        CollectionAssert.AreEqual(content0, BrotliBlock.Decompress(new MemoryStream(compressed0), BlockPosition.Middle));
         byte[] content1 = CreateRandomBytes(100, 64);
-        byte[] compressed1 = BrotliBlocks.Compress(content1, bare: true, window_size: compress_window_bits);
-        CollectionAssert.AreEqual(content1, BrotliBlocks.Decompress(new MemoryStream(compressed1), BlockPosition.Middle));
+        byte[] compressed1 = BrotliBlock.Compress(content1, bare: true, window_size: compress_window_bits);
+        CollectionAssert.AreEqual(content1, BrotliBlock.Decompress(new MemoryStream(compressed1), BlockPosition.Middle));
 
         using var compressed = new MemoryStream();
         compressed.Write(BrotliBlockStream.GetStartBlock(compress_window_bits));
@@ -105,7 +105,7 @@ public class BroccoliTests
         compressed.Write(compressed1);
         compressed.Write(BrotliBlockStream.EndBlock);
         compressed.Position = 0;
-        var decompressed = BrotliBlocks.Decompress(compressed);
+        var decompressed = BrotliBlock.Decompress(compressed);
 
         byte[] content = content0.Concat(content1).ToArray();
         CollectionAssert.AreEqual(content, decompressed);
@@ -165,7 +165,7 @@ public class BroccoliTests
                         BlockPosition position = Enum.Parse<BlockPosition>(path[1]);
                         byte[] compressed = new byte[context.Request.ContentLength64];
                         await context.Request.InputStream.ReadExactlyAsync(compressed);
-                        byte[] decompressed = BrotliBlocks.Decompress(new MemoryStream(compressed), position, window_bits);
+                        byte[] decompressed = BrotliBlock.Decompress(new MemoryStream(compressed), position, window_bits);
                         using var sha256 = SHA256.Create();
                         byte[] hash_bytes = sha256.ComputeHash(decompressed);
                         string hash = Convert.ToHexString(hash_bytes);
@@ -220,7 +220,7 @@ public class BroccoliTests
                             blob_stream.Write(block);
                             Assert.AreEqual(
                                 block_hash,
-                                Convert.ToHexString(SHA256.Create().ComputeHash(BrotliBlocks.Decompress(new MemoryStream(block), position, window_bits))));
+                                Convert.ToHexString(SHA256.Create().ComputeHash(BrotliBlock.Decompress(new MemoryStream(block), position, window_bits))));
                         }
                         
                         await blob_stream.FlushAsync();
@@ -272,9 +272,9 @@ public class BroccoliTests
                 {
                     position = BlockPosition.Middle;
                 }
-                byte[] compressed = BrotliBlocks.CompressBlock(bytes, position, window_size: window_bits);
+                byte[] compressed = BrotliBlock.CompressBlock(bytes, position, window_size: window_bits);
     
-                byte[] decompressed = BrotliBlocks.Decompress(new MemoryStream(compressed), position, window_bits);
+                byte[] decompressed = BrotliBlock.Decompress(new MemoryStream(compressed), position, window_bits);
                 CollectionAssert.AreEqual(bytes.ToArray(), decompressed);
 
                 compressed_blocks_concat.Write(compressed);
@@ -284,7 +284,7 @@ public class BroccoliTests
             string meta_hash = Convert.ToHexString(meta_hasher.Hash!);
 
             compressed_blocks_concat.Position = 0;
-            byte[] decompressed_concat = BrotliBlocks.Decompress(compressed_blocks_concat);
+            byte[] decompressed_concat = BrotliBlock.Decompress(compressed_blocks_concat);
             CollectionAssert.AreEqual(original_blob.ToArray(), decompressed_concat);
 
             foreach ((string block_hash, BlockPosition position, byte[] compressed) in client_blocks)
@@ -300,7 +300,7 @@ public class BroccoliTests
 
             using var response = await client.GetAsync(uri + meta_hash);
             response.EnsureSuccessStatusCode();
-            byte[] decompressed = BrotliBlocks.Decompress(await response.Content.ReadAsStreamAsync());
+            byte[] decompressed = BrotliBlock.Decompress(await response.Content.ReadAsStreamAsync());
             CollectionAssert.AreEqual(original_blob.ToArray(), decompressed);
         }
     }

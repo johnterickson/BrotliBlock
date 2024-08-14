@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "broccoli-sharp", "lib\broccoli-sharp.csproj", "{B61D82D0-3BA9-4FC7-9A50-F57A7C36005E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BrotliBlockLib", "lib\BrotliBlockLib.csproj", "{B61D82D0-3BA9-4FC7-9A50-F57A7C36005E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "test", "test\test.csproj", "{F9C8D5EC-12DE-4EC0-947C-7C305391E271}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "broccoli", "broccoli\broccoli.csproj", "{B8BD34F4-782C-450C-B598-E86CB50B9B69}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BrotliBlock", "BrotliBlock\BrotliBlock.csproj", "{B8BD34F4-782C-450C-B598-E86CB50B9B69}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

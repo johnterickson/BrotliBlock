@@ -3,11 +3,11 @@
 using NetFxLab.IO.Compression;
 using System.IO.Compression;
 
-class BroccoliApp
+static class BrotliBlockApp
 {
     private static void DisplayUsage()
     {
-        Console.WriteLine("broccoli [-w window_bits] [-q quality] [-b (bare)] [-c (compress)]");
+        Console.WriteLine("BrotliBlock [-w window_bits] [-q quality] [-b (bare)] [-c (compress)]");
         Console.WriteLine("[-o output_path (stdout defaut, use '{}' for block index)]");
         Console.WriteLine("[--block-size block_size] [--buffer-size buffer_size]");
         Console.WriteLine("input_paths or --");
