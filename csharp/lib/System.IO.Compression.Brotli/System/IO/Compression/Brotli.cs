@@ -1,5 +1,4 @@
 ﻿using System.IO.Compression;
-using NetFxLab.IO.Compression.Resources;
 
 namespace NetFxLab.IO.Compression
 {
@@ -44,7 +43,7 @@ namespace NetFxLab.IO.Compression
                 LastDecoderResult = BrotliDecoderResult.NeedsMoreInput;
                 if (BrotliNativeState == IntPtr.Zero)
                 {
-                    throw new System.Exception(BrotliEx.DecoderInstanceCreate);
+                    throw new System.Exception("Decoder instance create fail");
                 }
                 CompressMode = false;
             }
@@ -55,7 +54,7 @@ namespace NetFxLab.IO.Compression
                 BrotliNativeState = BrotliNative.BrotliEncoderCreateInstance();
                 if (BrotliNativeState == IntPtr.Zero)
                 {
-                    throw new System.Exception(BrotliEx.EncoderInstanceCreate);
+                    throw new System.Exception("Encoder instance create fail");
                 }
                 CompressMode = true;
             }
@@ -68,7 +67,7 @@ namespace NetFxLab.IO.Compression
                 }
                 if (quality > MaxQuality)
                 {
-                    throw new ArgumentException(BrotliEx.WrongQuality);
+                    throw new ArgumentException("Incorrect value of quality");
                 }
                 BrotliNative.BrotliEncoderSetParameter(BrotliNativeState, BrotliEncoderParameter.Quality, quality);
             }
@@ -86,7 +85,7 @@ namespace NetFxLab.IO.Compression
                 }
                 if (window - MinWindowBits > MaxWindowBits - MinWindowBits)
                 {
-                    throw new ArgumentException(BrotliEx.WrongWindowSize);
+                    throw new ArgumentException("Incorrect value of WindowSize");
                 }
                 BrotliNative.BrotliEncoderSetParameter(BrotliNativeState, BrotliEncoderParameter.LGWin, window);
             }
@@ -108,7 +107,7 @@ namespace NetFxLab.IO.Compression
             {
                 if (state.CompressMode != compress)
                 {
-                    throw new System.Exception((BrotliEx.InvalidModeChange));
+                    throw new System.Exception("Mode change is not permitted");
                 }
                 return;
             }
@@ -269,11 +268,11 @@ namespace NetFxLab.IO.Compression
                 {
                     var error = BrotliNative.BrotliDecoderGetErrorCode(state.BrotliNativeState);
                     var text = BrotliNative.BrotliDecoderErrorString(error);
-                    throw new System.IO.IOException(text + BrotliEx.unableDecode);
+                    throw new System.IO.IOException(text + "unable to decode stream");
                 }
                 if (state.LastDecoderResult == BrotliDecoderResult.NeedsMoreInput)
                 {
-                    throw new System.IO.IOException(BrotliEx.FinishDecompress);
+                    throw new System.IO.IOException("Unexpected decompress finish");
                 }
                 return GetTransformationStatusFromBrotliDecoderResult(state.LastDecoderResult);
             }

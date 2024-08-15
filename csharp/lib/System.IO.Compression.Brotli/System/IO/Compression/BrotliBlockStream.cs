@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 using System.IO.Compression;
 using NetFxLab.IO.Compression;
-using NetFxLab.IO.Compression.Resources;
 
 namespace BrotliBlock
 {
@@ -238,19 +237,19 @@ namespace BrotliBlock
                 throw new ArgumentOutOfRangeException(nameof(count));
 
             if (array.Length - offset < count)
-                throw new ArgumentOutOfRangeException("Offset and Count aren't consistent", BrotliEx.InvalidArgument);
+                throw new ArgumentOutOfRangeException("Offset and Count aren't consistent", "Argument is invalid");
         }
 
         private void EnsureDecompressionMode()
         {
             if (_mode != CompressionMode.Decompress)
-                throw new System.InvalidOperationException(BrotliEx.WrongModeDecompress);
+                throw new System.InvalidOperationException("Wrong stream mode. Expect: Decompress");
         }
 
         private void EnsureNotDisposed()
         {
             if (_stream == null)
-                throw new ObjectDisposedException(BrotliEx.StreamDisposed);
+                throw new ObjectDisposedException("Stream disposed or not created");
         }
 
         public override int Read(byte[] buffer, int offset, int count)
@@ -263,7 +262,7 @@ namespace BrotliBlock
             TimeSpan ExecutionTime = DateTime.Now - begin;
             if (ReadTimeout > 0 && ExecutionTime.TotalMilliseconds >= ReadTimeout)
             {
-                throw new TimeoutException(BrotliEx.TimeoutRead);
+                throw new TimeoutException("Error ReadTimeout exceeded");
             }
             while (true)
             {
@@ -311,7 +310,7 @@ namespace BrotliBlock
         private void EnsureCompressionMode()
         {
             if (_mode != CompressionMode.Compress)
-                throw new System.InvalidOperationException(BrotliEx.WrongModeCompress);
+                throw new System.InvalidOperationException("Wrong stream mode. Expect: Compress");
         }
 
         public override void Write(byte[] buffer, int offset, int count)
@@ -328,14 +327,14 @@ namespace BrotliBlock
                 TimeSpan ExecutionTime = DateTime.Now - begin;
                 if (WriteTimeout > 0 && ExecutionTime.TotalMilliseconds >= WriteTimeout)
                 {
-                    throw new TimeoutException(BrotliEx.TimeoutWrite);
+                    throw new TimeoutException("Error WriteTimeout exceeded");
                 }
                 copyLen = bytesRemain > _bufferSize ? _bufferSize : bytesRemain;
                 Span<byte> bufferInput = new Span<byte>(buffer, currentOffset, copyLen);
                 _transformationResult = Brotli.Compress(bufferInput, _buffer, out _availableInput, out _availableOutput, ref _state);
                 if (_transformationResult == TransformationStatus.InvalidData)
                 {
-                    throw new System.Exception(BrotliEx.unableEncode);
+                    throw new System.Exception("unable to compress stream");
                 }
                 if (_transformationResult == TransformationStatus.DestinationTooSmall)
                 {

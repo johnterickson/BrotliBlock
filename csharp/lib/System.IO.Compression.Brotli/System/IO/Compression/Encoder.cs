@@ -1,7 +1,6 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-using NetFxLab.IO.Compression.Resources;
 
 namespace NetFxLab.IO.Compression
 {
@@ -24,7 +23,7 @@ namespace NetFxLab.IO.Compression
         {
             if (quality < MinQuality || quality > MaxQuality)
             {
-                throw new ArgumentException(BrotliEx.WrongQuality);
+                throw new ArgumentException("Incorrect value of quality");
             }
             BrotliNative.BrotliEncoderSetParameter(State, BrotliEncoderParameter.Quality, quality);
         }
@@ -38,7 +37,7 @@ namespace NetFxLab.IO.Compression
         {
             if (window < MinWindowBits || window > MaxWindowBits)
             {
-                throw new ArgumentException(BrotliEx.WrongWindowSize);
+                throw new ArgumentException("Incorrect value of WindowSize");
             }
             BrotliNative.BrotliEncoderSetParameter(State, BrotliEncoderParameter.LGWin, window);
         }
@@ -53,7 +52,7 @@ namespace NetFxLab.IO.Compression
             State = BrotliNative.BrotliEncoderCreateInstance();
             if (State == IntPtr.Zero)
             {
-                throw new System.IO.IOException(BrotliEx.EncoderInstanceCreate);
+                throw new System.IO.IOException("Encoder instance create fail");
             }
         }
 

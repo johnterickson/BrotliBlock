@@ -1,7 +1,6 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-using NetFxLab.IO.Compression.Resources;
 
 namespace NetFxLab.IO.Compression
 {
@@ -24,7 +23,7 @@ namespace NetFxLab.IO.Compression
             State = BrotliNative.BrotliDecoderCreateInstance();
             if (State == IntPtr.Zero)
             {
-                throw new System.IO.IOException(BrotliEx.DecoderInstanceCreate);
+                throw new System.IO.IOException("Decoder instance create fail");
             }
             LastDecoderResult = BrotliDecoderResult.NeedsMoreInput;
             _bufferStream = new MemoryStream();
