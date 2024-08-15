@@ -1,5 +1,9 @@
 #if NETSTANDARD
 
+using System.Reflection;
+
+[assembly:AssemblyKeyFile("..\\strong_name.snk")]
+
 public static class Extensions
 {
     public static void Write(this Stream stream, byte[] buffer)
