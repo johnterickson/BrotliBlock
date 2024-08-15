@@ -42,7 +42,7 @@ jobs:
     - name: Publish package
       uses: actions/upload-artifact@v4
       with:
-        path: nupkgs/BrotliBlockLib*.nupkg
+        path: csharp/nupkgs/BrotliBlockLib*.nupkg
         name: ${{ matrix.os }}_nupkgs
       
 
