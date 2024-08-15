@@ -8,15 +8,16 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Platforms>x64</Platforms>
     <NoWarn>CS8981;CS8601;CS8602;CS8603;CS8604;;CS8618;CS8625;CS8765</NoWarn>
+    <NativeLib Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(MSBuildThisFileDirectory)../../rust-brotli/c/target/release/brotli_ffi.dll</NativeLib>
+    <NativeLib Condition="$([MSBuild]::IsOSPlatform('Linux'))">$(MSBuildThisFileDirectory)../../rust-brotli/c/target/release/libbrotli_ffi.so</NativeLib>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="../../rust-brotli/c/target/debug/brotli_ffi.dll" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <Content Include="$(NativeLib)" >
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="../../rust-brotli/c/target/debug/libbrotli_ffi.so" Condition="$([MSBuild]::IsOSPlatform('Linux'))">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+      <IncludeInPackage>true</IncludeInPackage>
+      <PackagePath>lib/net8.0</PackagePath>
+    </Content>
   </ItemGroup>
 
 </Project>
