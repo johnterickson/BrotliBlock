@@ -39,7 +39,7 @@ public class BrotliBlockTests
     {
         byte[] content = CreateRandomBytes(100, 64);
 
-        foreach (BlockPosition position in Enum.GetValues<BlockPosition>())
+        foreach (BlockPosition position in Enum.GetValues(typeof(BlockPosition)))
         {
             using var compressed = new MemoryStream(BrotliBlock.CompressBlock(content, position, window_size: 24));
             byte[] decompressed = BrotliBlock.Decompress(compressed, position, window_size: 24);
@@ -127,6 +127,7 @@ public class BrotliBlockTests
         BrotliConcatBlocks(11, 0);
     }
 
+#if NETCORE
     [TestMethod]
     public async Task HttpServer()
     {
@@ -304,4 +305,5 @@ public class BrotliBlockTests
             CollectionAssert.AreEqual(original_blob.ToArray(), decompressed);
         }
     }
+#endif
 }

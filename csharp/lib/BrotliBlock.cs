@@ -51,9 +51,15 @@ public static class BrotliBlock
 
     public static byte[] Decompress(Stream compressed, bool needs_start_block = false, bool needs_end_block = false, byte window_size = 22)
     {
+#if NETSTANDARD
+        using Stream decompressedBrotli = BrotliBlockStream.CreateDecompressionStream(compressed,
+            needs_start_block: needs_start_block, needs_end_block: needs_end_block);
+#else
         using Stream decompressedBrotli = (needs_start_block || needs_end_block)
-            ? BrotliBlockStream.CreateDecompressionStream(compressed, needs_start_block: needs_start_block, needs_end_block: needs_end_block)
+            ? BrotliBlockStream.CreateDecompressionStream(compressed,
+                needs_start_block: needs_start_block, needs_end_block: needs_end_block)
             : new BrotliStream(compressed, CompressionMode.Decompress);
+#endif
         using var decompressedStream = new MemoryStream();
         decompressedBrotli.CopyTo(decompressedStream);
         return decompressedStream.ToArray();

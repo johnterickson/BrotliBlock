@@ -1,9 +1,18 @@
-﻿using System.Buffers;
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using NetFxLab.IO.Compression.Resources;
 
 namespace NetFxLab.IO.Compression
 {
+    internal enum TransformationStatus
+    {
+        Done,
+        DestinationTooSmall,
+        NeedMoreSourceData,
+        InvalidData, // TODO: how do we communicate details of the error
+        ReadBareStartBlock,
+        ReadBareEndBlock,
+    }
+
     internal static class Brotli
     {
         internal const int MinWindowBits = 10;
@@ -141,6 +150,8 @@ namespace NetFxLab.IO.Compression
             return TransformationStatus.InvalidData;
         }
 
+        private static readonly byte[] DummyBuffer = new byte[1];
+
         public static TransformationStatus FlushEncoder(ReadOnlySpan<byte> source, Span<byte> destination, out int bytesConsumed, out int bytesWritten, ref State state, bool isFinished = true)
         {
             EnsureInitialized(ref state, true);
@@ -152,8 +163,14 @@ namespace NetFxLab.IO.Compression
             unsafe
             {
                 IntPtr bufIn, bufOut;
+#if NETSTANDARD
+                byte[] sourceArray = source._array.Length == 0 ? DummyBuffer : source._array;
+                fixed (byte* inBytes = &sourceArray[source._start])
+                fixed (byte* outBytes = &destination._array[destination._start])
+#else
                 fixed (byte* inBytes = &source.GetPinnableReference())
                 fixed (byte* outBytes = &destination.GetPinnableReference())
+#endif
                 {
                     bufIn = new IntPtr(inBytes);
                     bufOut = new IntPtr(outBytes);
@@ -186,8 +203,13 @@ namespace NetFxLab.IO.Compression
                 IntPtr bufIn, bufOut;
                 while (bytesConsumed > 0)
                 {
+#if NETSTANDARD
+                    fixed (byte* inBytes = &source._array[source._start])
+                    fixed (byte* outBytes = &destination._array[destination._start])
+#else
                     fixed (byte* inBytes = &source.GetPinnableReference())
                     fixed (byte* outBytes = &destination.GetPinnableReference())
+#endif
                     {
                         bufIn = new IntPtr(inBytes);
                         bufOut = new IntPtr(outBytes);
@@ -218,8 +240,13 @@ namespace NetFxLab.IO.Compression
             unsafe
             {
                 IntPtr bufIn, bufOut;
+#if NETSTANDARD
+                fixed (byte* inBytes = &source._array[source._start])
+                fixed (byte* outBytes = &destination._array[destination._start])
+#else
                 fixed (byte* inBytes = &source.GetPinnableReference())
                 fixed (byte* outBytes = &destination.GetPinnableReference())
+#endif
                 {
                     bufIn = new IntPtr(inBytes);
                     bufOut = new IntPtr(outBytes);
