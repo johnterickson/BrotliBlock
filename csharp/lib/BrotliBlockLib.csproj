@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <RootNamespace>BrotliBlock</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -15,11 +15,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="$(NativeLib)" >
+    <Content Include="$(NativeLib)">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <IncludeInPackage>true</IncludeInPackage>
       <PackagePath>lib/net8.0;lib/netstandard2.0</PackagePath>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Memory" Version="4.5.5" />
   </ItemGroup>
 
 </Project>

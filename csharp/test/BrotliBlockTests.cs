@@ -1,6 +1,7 @@
 namespace test;
 
 using BrotliBlock;
+using System.IO.Compression;
 
 [TestClass]
 public class BrotliBlockTests

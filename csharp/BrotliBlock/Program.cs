@@ -1,7 +1,6 @@
 ﻿// BitArray 
 
 using BrotliBlock;
-using NetFxLab.IO.Compression;
 using System.IO.Compression;
 
 static class BrotliBlockApp
@@ -137,8 +136,14 @@ static class BrotliBlockApp
                         output.Write(BrotliBlockStream.GetStartBlock((byte)window_bits));
                     }
 
-                    compressed = (output, BrotliBlockStream.CreateCompressionStream(output, quality: quality, window_bits: window_bits,
-                        catable: bare, bare: bare, byte_align: bare, magic: bare, leaveOpen: true));
+                    compressed = (output, new BrotliBlockStream(output, new BrotliCompressionOptions()
+                    {
+                        Quality = (int)quality,
+                        WindowBits = (int)window_bits,
+                        Catable = bare,
+                        ByteAlign = bare,
+                        MagicNumber = bare,
+                    }, leaveOpen: true));
                 }
 
                 int bytes_to_read;
@@ -194,7 +199,7 @@ static class BrotliBlockApp
             using Stream output = output_path == "--" ? Console.OpenStandardOutput() : File.OpenWrite(output_path);
             using ConcatenatedStream input_stream = new(inputs);
             using Stream decompressed = blockPosition.HasValue
-                ? BrotliBlockStream.CreateDecompressionStream(input_stream, blockPosition.Value, window_bits: window_bits)
+                ? new BrotliBlockStream(input_stream, blockPosition.Value, window_size: window_bits)
                 : new BrotliStream(input_stream, CompressionMode.Decompress);
             decompressed.CopyTo(output);
         }
