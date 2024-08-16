@@ -2,7 +2,7 @@
 
 using System.Reflection;
 
-[assembly:AssemblyKeyFile("..\\strong_name.snk")]
+[assembly:AssemblyKeyFile("../strong_name.snk")]
 
 public static class Extensions
 {
