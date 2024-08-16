@@ -1,6 +1,6 @@
 ﻿using System.IO.Compression;
 
-namespace BrotliBlock;
+namespace BrotliBlockLib;
 
 public enum BlockPosition
 {
@@ -62,10 +62,10 @@ public static class BrotliBlock
     public static byte[] Decompress(Stream compressed, BlockPosition position, byte window_size = 22)
     {
 #if NETSTANDARD
-        using Stream decompressedBrotli = BrotliBlockStream.CreateDecompressionStream(compressed, position, window_bits: window_size);
+        using Stream decompressedBrotli = new BrotliBlockStream(compressed, position, window_size: window_size);
 #else
         using Stream decompressedBrotli = position != BlockPosition.Single
-            ? new BrotliBlockStream(compressed, position)
+            ? new BrotliBlockStream(compressed, position, window_size: window_size)
             : new BrotliStream(compressed, CompressionMode.Decompress);
 #endif
         using var decompressedStream = new MemoryStream();

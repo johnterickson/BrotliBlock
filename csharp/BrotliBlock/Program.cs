@@ -1,6 +1,6 @@
 ﻿// BitArray 
 
-using BrotliBlock;
+using BrotliBlockLib;
 using System.IO.Compression;
 
 static class BrotliBlockApp

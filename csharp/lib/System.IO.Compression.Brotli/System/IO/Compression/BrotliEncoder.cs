@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
-namespace System.IO.Compression
+namespace BrotliBlockLib
 {
     /// <summary>Provides methods and static methods to encode and decode data in a streamless, non-allocating, and performant manner using the Brotli data format specification.</summary>
     internal partial struct BrotliEncoder : IDisposable
@@ -117,8 +117,8 @@ namespace System.IO.Compression
         /// <exception cref="System.ArgumentOutOfRangeException"><paramref name="inputSize" /> is less than 0, the minimum allowed input size, or greater than <see cref="int.MaxValue" /> - 515, the maximum allowed input size.</exception>
         public static int GetMaxCompressedLength(int inputSize)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(inputSize);
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(inputSize, BrotliUtils.MaxInputSize);
+            NetstandardCompat.ThrowIfNegative(inputSize, nameof(inputSize));
+            NetstandardCompat.ThrowIfGreaterThan(inputSize, BrotliUtils.MaxInputSize, nameof(inputSize));
 
             if (inputSize == 0)
             {

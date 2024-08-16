@@ -3,8 +3,9 @@
 
 using System.Buffers;
 using System.Diagnostics;
+using System.IO.Compression;
 
-namespace System.IO.Compression
+namespace BrotliBlockLib
 {
     /// <summary>Provides methods and properties used to compress and decompress streams by using the Brotli data format specification.</summary>
     public sealed partial class BrotliBlockStream : Stream
@@ -30,10 +31,11 @@ namespace System.IO.Compression
         /// <exception cref="System.ObjectDisposedException">The underlying stream is null or closed.</exception>
         public override int Read(byte[] buffer, int offset, int count)
         {
-            ValidateBufferArguments(buffer, offset, count);
+            NetstandardCompat.ValidateBufferArguments(buffer, offset, count);
             return Read(new Span<byte>(buffer, offset, count));
         }
 
+#if !NETSTANDARD
         /// <summary>
         /// Reads a byte from the stream and advances the position within the stream by one byte, or returns -1 if at the end of the stream.
         /// </summary>
@@ -47,6 +49,7 @@ namespace System.IO.Compression
             int bytesRead = Read(new Span<byte>(ref b));
             return bytesRead != 0 ? b : -1;
         }
+#endif
 
         /// <summary>Reads a sequence of bytes from the current Brotli stream to a byte span and advances the position within the Brotli stream by the number of bytes read.</summary>
         /// <param name="buffer">A region of memory. When this method returns, the contents of this region are replaced by the bytes read from the current source.</param>
@@ -54,8 +57,11 @@ namespace System.IO.Compression
         /// <remarks><para>Use the <see cref="System.IO.Compression.BrotliStream.CanRead" /> property to determine whether the current instance supports reading. Use the <see langword="System.IO.Compression.BrotliStream.ReadAsync" /> method to read asynchronously from the current stream.</para>
         /// <para>This method reads a maximum of <c>buffer.Length</c> bytes from the current stream and stores them in <paramref name="buffer" />. The current position within the Brotli stream is advanced by the number of bytes read; however, if an exception occurs, the current position within the Brotli stream remains unchanged. This method will block until at least one byte of data can be read, in the event that no data is available. <c>Read</c> returns 0 only when there is no more data in the stream and no more is expected (such as a closed socket or end of file). The method is free to return fewer bytes than requested even if the end of the stream has not been reached.</para>
         /// <para>Use <see cref="System.IO.BinaryReader" /> to read primitive data types.</para></remarks>
-#if NET5_0_OR_GREATER
+#if NETSTANDARD
+        public int Read(Span<byte> buffer)
+#else
         public override int Read(Span<byte> buffer)
+#endif
         {
             if (_mode != CompressionMode.Decompress)
                 throw new InvalidOperationException("SR.BrotliStream_Compress_UnsupportedOperation");
@@ -90,7 +96,6 @@ namespace System.IO.Compression
 
             return bytesWritten;
         }
-#endif
 
         /// <summary>Begins an asynchronous read operation. (Consider using the <see cref="System.IO.Stream.ReadAsync(byte[],int,int)" /> method instead.)</summary>
         /// <param name="buffer">The buffer from which data will be read.</param>
@@ -116,6 +121,7 @@ namespace System.IO.Compression
         public override int EndRead(IAsyncResult asyncResult) =>
             TaskToAsyncResult.End<int>(asyncResult);
 
+#if !NETSTANDARD
         /// <summary>Asynchronously reads a sequence of bytes from the current Brotli stream, writes them to a byte array starting at a specified index, advances the position within the Brotli stream by the number of bytes read, and monitors cancellation requests.</summary>
         /// <param name="buffer">The buffer to write the data into.</param>
         /// <param name="offset">The byte offset in <paramref name="buffer" /> at which to begin writing data from the Brotli stream.</param>
@@ -127,7 +133,7 @@ namespace System.IO.Compression
         /// <para>If the operation is canceled before it completes, the returned task contains the <see cref="System.Threading.Tasks.TaskStatus.Canceled" /> value for the <see cref="System.Threading.Tasks.Task.Status" /> property.</para></remarks>
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            ValidateBufferArguments(buffer, offset, count);
+            NetstandardCompat.ValidateBufferArguments(buffer, offset, count);
             return ReadAsync(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
         }
 
@@ -138,7 +144,7 @@ namespace System.IO.Compression
         /// <remarks><para>This method enables you to perform resource-intensive I/O operations without blocking the main thread. This performance consideration is particularly important in apps where a time-consuming stream operation can block the UI thread and make your app appear as if it is not working. The async methods are used in conjunction with the <see langword="async" /> and <see langword="await" /> keywords in Visual Basic and C#.</para>
         /// <para>Use the <see cref="System.IO.Compression.BrotliStream.CanRead" /> property to determine whether the current instance supports reading.</para>
         /// <para>If the operation is canceled before it completes, the returned task contains the <see cref="System.Threading.Tasks.TaskStatus.Canceled" /> value for the <see cref="System.Threading.Tasks.Task.Status" /> property.</para></remarks>
-#if NET5_0_OR_GREATER
+
         public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (_mode != CompressionMode.Decompress)

@@ -1,7 +1,10 @@
 namespace test;
 
-using BrotliBlock;
+using BrotliBlockLib;
 using System.IO.Compression;
+using System.Net;
+using System.Net.Sockets;
+using System.Security.Cryptography;
 
 [TestClass]
 public class BrotliBlockTests
@@ -191,7 +194,7 @@ public class BrotliBlockTests
         BrotliConcatBlocks(11, 0);
     }
 
-#if NETCORE
+#if !NETFRAMEWORK
     [TestMethod]
     public async Task HttpServer()
     {
@@ -349,7 +352,7 @@ public class BrotliBlockTests
             string meta_hash = Convert.ToHexString(meta_hasher.Hash!);
 
             compressed_blocks_concat.Position = 0;
-            byte[] decompressed_concat = BrotliBlock.Decompress(compressed_blocks_concat);
+            byte[] decompressed_concat = BrotliBlock.Decompress(compressed_blocks_concat, BlockPosition.Single);
             CollectionAssert.AreEqual(original_blob.ToArray(), decompressed_concat);
 
             foreach ((string block_hash, BlockPosition position, byte[] compressed) in client_blocks)
@@ -365,9 +368,32 @@ public class BrotliBlockTests
 
             using var response = await client.GetAsync(uri + meta_hash);
             response.EnsureSuccessStatusCode();
-            byte[] decompressed = BrotliBlock.Decompress(await response.Content.ReadAsStreamAsync());
+            byte[] decompressed = BrotliBlock.Decompress(await response.Content.ReadAsStreamAsync(), BlockPosition.Single);
             CollectionAssert.AreEqual(original_blob.ToArray(), decompressed);
         }
     }
 #endif
 }
+
+#if NETFRAMEWORK
+internal static class Extensions
+{
+    public static void Write(this Stream stream, byte[] buffer)
+    {
+        stream.Write(buffer, 0, buffer.Length);
+    }
+
+    public static void Write(this Stream stream, ReadOnlySpan<byte> buffer)
+    {
+        // TODO: perf
+        stream.Write(buffer.ToArray());
+    }
+
+    public static Task WriteAsync(this Stream stream, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
+    {
+        // TODO: perf
+        byte[] bytes = buffer.ToArray();
+        return stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
+    }
+}
+#endif

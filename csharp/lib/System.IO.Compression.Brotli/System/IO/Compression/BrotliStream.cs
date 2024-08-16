@@ -1,11 +1,11 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using BrotliBlock;
 using System.Buffers;
 using System.Diagnostics;
+using System.IO.Compression;
 
-namespace System.IO.Compression
+namespace BrotliBlockLib
 {
     /// <summary>Provides methods and properties used to compress and decompress streams by using the Brotli data format specification.</summary>
     public sealed partial class BrotliBlockStream : Stream
@@ -68,7 +68,7 @@ namespace System.IO.Compression
         /// <param name="leaveOpen"><see langword="true" /> to leave the stream open after the <see cref="System.IO.Compression.BrotliStream" /> object is disposed; otherwise, <see langword="false" />.</param>
         public BrotliBlockStream(Stream stream, CompressionMode mode, bool leaveOpen)
         {
-            ArgumentNullException.ThrowIfNull(stream);
+            NetstandardCompat.ThrowIfNull(stream, nameof(stream));
 
             switch (mode)
             {
@@ -101,7 +101,10 @@ namespace System.IO.Compression
 
         private void EnsureNotDisposed()
         {
-            ObjectDisposedException.ThrowIf(_stream is null, this);
+            if (_stream is null)
+            {
+                throw new ObjectDisposedException(nameof(_stream));
+            }
         }
 
         /// <summary>Releases the unmanaged resources used by the <see cref="System.IO.Compression.BrotliStream" /> and optionally releases the managed resources.</summary>
@@ -212,7 +215,7 @@ namespace System.IO.Compression
         /// <param name="value">The length of the stream.</param>
         public override void SetLength(long value) => throw new NotSupportedException();
 
-        private volatile nuint _activeAsyncOperation;
+        private volatile int _activeAsyncOperation;
 
         private void EnsureNoActiveAsyncOperation()
         {

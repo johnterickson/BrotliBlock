@@ -1,7 +1,7 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-namespace System.IO.Compression
+namespace BrotliBlockLib
 {
     /// <summary>
     /// Provides compression options to be used with <see cref="BrotliStream"/>.
@@ -22,8 +22,8 @@ namespace System.IO.Compression
             get => _quality;
             set
             {
-                ArgumentOutOfRangeException.ThrowIfLessThan(value, 0, nameof(value));
-                ArgumentOutOfRangeException.ThrowIfGreaterThan(value, 11, nameof(value));
+                NetstandardCompat.ThrowIfLessThan(value, 0, nameof(value));
+                NetstandardCompat.ThrowIfGreaterThan(value, 11, nameof(value));
 
                 _quality = value;
             }
@@ -40,8 +40,8 @@ namespace System.IO.Compression
         {
             get => _windowBits; set
             {
-                ArgumentOutOfRangeException.ThrowIfLessThan(value, 10, nameof(value));
-                ArgumentOutOfRangeException.ThrowIfGreaterThan(value, 24, nameof(value));
+                NetstandardCompat.ThrowIfLessThan(value, 10, nameof(value));
+                NetstandardCompat.ThrowIfGreaterThan(value, 24, nameof(value));
 
                 _windowBits = value;
             }

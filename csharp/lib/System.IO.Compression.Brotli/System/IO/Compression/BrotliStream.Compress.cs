@@ -2,8 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Buffers;
+using System.IO.Compression;
 
-namespace System.IO.Compression
+namespace BrotliBlockLib
 {
     /// <summary>Provides methods and properties used to compress and decompress streams by using the Brotli data format specification.</summary>
     public sealed partial class BrotliBlockStream : Stream
@@ -35,7 +36,7 @@ namespace System.IO.Compression
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> or <paramref name="compressionOptions"/> is <see langword="null" />.</exception>
         public BrotliBlockStream(Stream stream, BrotliCompressionOptions compressionOptions, bool leaveOpen = false) : this(stream, CompressionMode.Compress, leaveOpen)
         {
-            ArgumentNullException.ThrowIfNull(compressionOptions);
+            NetstandardCompat.ThrowIfNull(compressionOptions, nameof(compressionOptions));
 
             _encoder.SetQuality(compressionOptions.Quality);
             _encoder.SetWindow(compressionOptions.WindowBits);
@@ -53,10 +54,11 @@ namespace System.IO.Compression
         /// <exception cref="System.ObjectDisposedException">The write operation cannot be performed because the stream is closed.</exception>
         public override void Write(byte[] buffer, int offset, int count)
         {
-            ValidateBufferArguments(buffer, offset, count);
+            NetstandardCompat.ValidateBufferArguments(buffer, offset, count);
             WriteCore(new ReadOnlySpan<byte>(buffer, offset, count));
         }
 
+#if !NETSTANDARD
         /// <summary>
         /// Writes a byte to the current position in the stream and advances the position within the stream by one byte.
         /// </summary>
@@ -69,7 +71,6 @@ namespace System.IO.Compression
             WriteCore(new ReadOnlySpan<byte>(in value));
         }
 
-#if NET5_0_OR_GREATER
         /// <summary>Writes a sequence of bytes to the current Brotli stream from a read-only byte span and advances the current position within this Brotli stream by the number of bytes written.</summary>
         /// <param name="buffer">A region of memory. This method copies the contents of this region to the current Brotli stream.</param>
         /// <remarks><para>Use the <see cref="System.IO.Compression.BrotliStream.CanWrite" /> property to determine whether the current instance supports writing. Use the <see langword="System.IO.Compression.BrotliStream.WriteAsync" /> method to write asynchronously to the current stream.</para>
@@ -102,6 +103,7 @@ namespace System.IO.Compression
             }
         }
 
+#if !NETSTANDARD
         /// <summary>Begins an asynchronous write operation. (Consider using the <see cref="System.IO.Stream.WriteAsync(byte[],int,int)" /> method instead.)</summary>
         /// <param name="buffer">The buffer from which data will be written.</param>
         /// <param name="offset">The byte offset in <paramref name="buffer" /> at which to begin writing data from the stream.</param>
@@ -134,8 +136,8 @@ namespace System.IO.Compression
         /// <para>If the operation is canceled before it completes, the returned task contains the <see cref="System.Threading.Tasks.TaskStatus.Canceled" /> value for the <see cref="System.Threading.Tasks.Task.Status" /> property.</para></remarks>
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            ValidateBufferArguments(buffer, offset, count);
-            return WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, count), cancellationToken).AsTask();
+            NetstandardCompat.ValidateBufferArguments(buffer, offset, count);
+            return WriteAsync(buffer, offset, count, cancellationToken);
         }
 
         /// <summary>Asynchronously writes compressed bytes to the underlying Brotli stream from the specified byte memory range.</summary>
@@ -145,7 +147,6 @@ namespace System.IO.Compression
         /// <remarks><para>This method enables you to perform resource-intensive I/O operations without blocking the main thread. This performance consideration is particularly important in apps where a time-consuming stream operation can block the UI thread and make your app appear as if it is not working. The async methods are used in conjunction with the <see langword="async" /> and <see langword="await" /> keywords in Visual Basic and C#.</para>
         /// <para>Use the <see cref="System.IO.Compression.BrotliStream.CanWrite" /> property to determine whether the current instance supports writing.</para>
         /// <para>If the operation is canceled before it completes, the returned task contains the <see cref="System.Threading.Tasks.TaskStatus.Canceled" /> value for the <see cref="System.Threading.Tasks.Task.Status" /> property.</para></remarks>
-#if NET5_0_OR_GREATER
         public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (_mode != CompressionMode.Compress)
