@@ -7,7 +7,8 @@ public enum BlockPosition
 {
     First,
     Middle,
-    Last
+    Last,
+    Single
 }
 
 public static class BrotliBlock
@@ -16,7 +17,7 @@ public static class BrotliBlock
     {
         using var compressed = new MemoryStream();
         
-        if (position == BlockPosition.First)
+        if (position == BlockPosition.First || position == BlockPosition.Single)
         {
             compressed.Write(BrotliBlockStream.GetStartBlock(window_size));
         }
@@ -27,7 +28,7 @@ public static class BrotliBlock
             s0.Write(bytes);
         }
 
-        if (position == BlockPosition.Last)
+        if (position == BlockPosition.Last || position == BlockPosition.Single)
         {
             compressed.Write(BrotliBlockStream.EndBlock);
         }
@@ -46,18 +47,13 @@ public static class BrotliBlock
         return compressed.ToArray();
     }
 
-    public static byte[] Decompress(Stream compressed, BlockPosition position, byte window_size = 22) => 
-        Decompress(compressed, needs_start_block: position != BlockPosition.First, needs_end_block: position != BlockPosition.Last);
-
-    public static byte[] Decompress(Stream compressed, bool needs_start_block = false, bool needs_end_block = false, byte window_size = 22)
+    public static byte[] Decompress(Stream compressed, BlockPosition position, byte window_size = 22)
     {
 #if NETSTANDARD
-        using Stream decompressedBrotli = BrotliBlockStream.CreateDecompressionStream(compressed,
-            needs_start_block: needs_start_block, needs_end_block: needs_end_block);
+        using Stream decompressedBrotli = BrotliBlockStream.CreateDecompressionStream(compressed, position, window_bits: window_size);
 #else
-        using Stream decompressedBrotli = (needs_start_block || needs_end_block)
-            ? BrotliBlockStream.CreateDecompressionStream(compressed,
-                needs_start_block: needs_start_block, needs_end_block: needs_end_block)
+        using Stream decompressedBrotli = position != BlockPosition.Single
+            ? BrotliBlockStream.CreateDecompressionStream(compressed, position, window_bits: window_size)
             : new BrotliStream(compressed, CompressionMode.Decompress);
 #endif
         using var decompressedStream = new MemoryStream();

@@ -64,6 +64,14 @@ namespace BrotliBlock
             }
         }
 
+        public static BrotliBlockStream CreateDecompressionStream(Stream compressed, BlockPosition position, int bufferSize = DefaultBufferSize, bool leaveOpen = false, uint window_bits = 24)
+            =>
+            CreateDecompressionStream(
+                compressed, bufferSize, leaveOpen,
+                needs_start_block: position == BlockPosition.Middle || position == BlockPosition.Last,
+                needs_end_block: position == BlockPosition.First || position == BlockPosition.Middle,
+                window_bits: window_bits);
+
         public static BrotliBlockStream CreateDecompressionStream(
             Stream compressed, int bufferSize = DefaultBufferSize, bool leaveOpen = false,
             bool needs_start_block = false, bool needs_end_block = false, 

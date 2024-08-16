@@ -30,7 +30,7 @@ public class BrotliBlockTests
     {
         byte[] content = CreateRandomBytes(100, 64);
         byte[] compressed = BrotliBlock.Compress(content, bare: false);
-        byte[] decompressed = BrotliBlock.Decompress(new MemoryStream(compressed));
+        byte[] decompressed = BrotliBlock.Decompress(new MemoryStream(compressed), BlockPosition.Single);
         CollectionAssert.AreEqual(content, decompressed);
     }
 
@@ -61,7 +61,7 @@ public class BrotliBlockTests
             compressed.Write(BrotliBlockStream.EndBlock);
             compressed.Position = 0;
 
-            var decompressed = BrotliBlock.Decompress(compressed);
+            var decompressed = BrotliBlock.Decompress(compressed, BlockPosition.Single);
             CollectionAssert.AreEqual(content, decompressed);
         }
         {
@@ -105,7 +105,7 @@ public class BrotliBlockTests
         compressed.Write(compressed1);
         compressed.Write(BrotliBlockStream.EndBlock);
         compressed.Position = 0;
-        var decompressed = BrotliBlock.Decompress(compressed);
+        var decompressed = BrotliBlock.Decompress(compressed, BlockPosition.Single);
 
         byte[] content = content0.Concat(content1).ToArray();
         CollectionAssert.AreEqual(content, decompressed);

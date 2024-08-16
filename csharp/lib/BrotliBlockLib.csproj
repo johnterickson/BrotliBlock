@@ -11,7 +11,7 @@
     <NoWarn>CS8981;CS8601;CS8602;CS8603;CS8604;;CS8618;CS8625;CS8765</NoWarn>
     <NativeLib Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(MSBuildThisFileDirectory)../../rust-brotli/c/target/release/brotli_ffi.dll</NativeLib>
     <NativeLib Condition="$([MSBuild]::IsOSPlatform('Linux'))">$(MSBuildThisFileDirectory)../../rust-brotli/c/target/release/libbrotli_ffi.so</NativeLib>
-    <Version>0.0.2</Version>
+    <Version>0.0.3</Version>
   </PropertyGroup>
 
   <ItemGroup>

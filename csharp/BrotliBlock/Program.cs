@@ -132,7 +132,7 @@ static class BrotliBlockApp
                         output = output_path == "--" ? Console.OpenStandardOutput() : File.OpenWrite(output_path);
                     }
 
-                    if (blockPosition == BlockPosition.First)
+                    if (blockPosition == BlockPosition.First || blockPosition == BlockPosition.Single)
                     {
                         output.Write(BrotliBlockStream.GetStartBlock((byte)window_bits));
                     }
@@ -194,9 +194,7 @@ static class BrotliBlockApp
             using Stream output = output_path == "--" ? Console.OpenStandardOutput() : File.OpenWrite(output_path);
             using ConcatenatedStream input_stream = new(inputs);
             using Stream decompressed = blockPosition.HasValue
-                ? BrotliBlockStream.CreateDecompressionStream(input_stream, window_bits: window_bits, 
-                    needs_start_block: blockPosition != BlockPosition.First,
-                    needs_end_block: blockPosition != BlockPosition.Last)
+                ? BrotliBlockStream.CreateDecompressionStream(input_stream, blockPosition.Value, window_bits: window_bits),
                 : new BrotliStream(input_stream, CompressionMode.Decompress);
             decompressed.CopyTo(output);
         }
