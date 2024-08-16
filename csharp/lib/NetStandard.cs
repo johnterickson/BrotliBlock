@@ -1,7 +1,7 @@
 
 #if NETSTANDARD
 using System.Reflection;
-[assembly: AssemblyKeyFile("..\\strong_name.snk")]
+[assembly: AssemblyKeyFile("../strong_name.snk")]
 #endif
 
 internal static class NetstandardCompat
