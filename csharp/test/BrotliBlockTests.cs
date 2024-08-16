@@ -1,26 +1,18 @@
 namespace test;
 
-using NetFxLab.IO.Compression;
-using System.Net;
-using System.Security.Cryptography;
-using System.Net.Sockets;
 using BrotliBlock;
 
 [TestClass]
 public class BrotliBlockTests
 {
-    private readonly Random random = new Random();
-
-    private byte[] CreateRandomBytes(int size, byte maxChar=255)
+    private byte[] CreateRandomBytes(int size, uint chars=256, int seed = 0)
     {
         var bytes = new byte[size];
-        lock(random)
-        {
-            random.NextBytes(bytes);
-        }
+        var random = new Random(seed);
+        random.NextBytes(bytes);
         for (int i = 0; i < size; i++)
         {
-            bytes[i] = (byte)(bytes[i] % (maxChar + 1));
+            bytes[i] = (byte)(bytes[i] % chars);
         }
         return bytes;
     }
@@ -44,6 +36,77 @@ public class BrotliBlockTests
             using var compressed = new MemoryStream(BrotliBlock.CompressBlock(content, position, window_size: 24));
             byte[] decompressed = BrotliBlock.Decompress(compressed, position, window_size: 24);
             CollectionAssert.AreEqual(content, decompressed);
+        }
+    }
+
+    [TestMethod]
+    public void PositionRoundTripLarge()
+    {
+        byte[] content = CreateRandomBytes(2 * 1024 * 1024, 256);
+
+        foreach (BlockPosition position in Enum.GetValues(typeof(BlockPosition)))
+        {
+            using var compressed = new MemoryStream(BrotliBlock.CompressBlock(content, position, window_size: 24));
+            byte[] decompressed = BrotliBlock.Decompress(compressed, position, window_size: 24);
+            CollectionAssert.AreEqual(content, decompressed);
+        }
+    }
+
+    [TestMethod]
+    public void Repro()
+    {
+        foreach (int size in new[] { 100_000 })
+        {
+            foreach (uint chars in new[] { 1 })
+            {
+                byte[] content = CreateRandomBytes(size, chars);
+
+                foreach (byte window_size in new[] { 10 })
+                {
+                    foreach (BlockPosition position in new[] { BlockPosition.First })
+                    {
+                        try
+                        {
+                            var compressed = BrotliBlock.CompressBlock(content, position, window_size: window_size);
+                            byte[] decompressed = BrotliBlock.Decompress(new MemoryStream(compressed), position, window_size: window_size);
+                            CollectionAssert.AreEqual(content, decompressed);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new Exception($"Mismatch with size={size} chars={chars} position={position} window_bits={window_size}", ex);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    [TestMethod]
+    public void Matrix()
+    {
+        foreach (int size in new[] { 0, 100, 1_000, 10_000, 100_000, 1_000_000, 2_000_000 })
+        {
+            foreach (uint chars in new[] { 1, 128, 256 })
+            {
+                byte[] content = CreateRandomBytes(size, chars);
+
+                foreach (byte window_size in new[] { 10, 22, 24 })
+                {
+                    foreach (BlockPosition position in Enum.GetValues(typeof(BlockPosition)))
+                    {
+                        try
+                        {
+                            using var compressed = new MemoryStream(BrotliBlock.CompressBlock(content, position, window_size: window_size));
+                            byte[] decompressed = BrotliBlock.Decompress(compressed, position, window_size: window_size);
+                            CollectionAssert.AreEqual(content, decompressed);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new Exception($"Mismatch with size={size} chars={chars} position={position} window_bits={window_size}", ex);
+                        }
+                    }
+                }
+            }
         }
     }
 
