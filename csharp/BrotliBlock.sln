@@ -16,22 +16,22 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|x64 = Debug|x64
-		Release|x64 = Release|x64
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B61D82D0-3BA9-4FC7-9A50-F57A7C36005E}.Debug|x64.ActiveCfg = Debug|x64
-		{B61D82D0-3BA9-4FC7-9A50-F57A7C36005E}.Debug|x64.Build.0 = Debug|x64
-		{B61D82D0-3BA9-4FC7-9A50-F57A7C36005E}.Release|x64.ActiveCfg = Release|x64
-		{B61D82D0-3BA9-4FC7-9A50-F57A7C36005E}.Release|x64.Build.0 = Release|x64
-		{F9C8D5EC-12DE-4EC0-947C-7C305391E271}.Debug|x64.ActiveCfg = Debug|x64
-		{F9C8D5EC-12DE-4EC0-947C-7C305391E271}.Debug|x64.Build.0 = Debug|x64
-		{F9C8D5EC-12DE-4EC0-947C-7C305391E271}.Release|x64.ActiveCfg = Release|x64
-		{F9C8D5EC-12DE-4EC0-947C-7C305391E271}.Release|x64.Build.0 = Release|x64
-		{B8BD34F4-782C-450C-B598-E86CB50B9B69}.Debug|x64.ActiveCfg = Debug|x64
-		{B8BD34F4-782C-450C-B598-E86CB50B9B69}.Debug|x64.Build.0 = Debug|x64
-		{B8BD34F4-782C-450C-B598-E86CB50B9B69}.Release|x64.ActiveCfg = Release|x64
-		{B8BD34F4-782C-450C-B598-E86CB50B9B69}.Release|x64.Build.0 = Release|x64
+		{B61D82D0-3BA9-4FC7-9A50-F57A7C36005E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B61D82D0-3BA9-4FC7-9A50-F57A7C36005E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B61D82D0-3BA9-4FC7-9A50-F57A7C36005E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B61D82D0-3BA9-4FC7-9A50-F57A7C36005E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9C8D5EC-12DE-4EC0-947C-7C305391E271}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9C8D5EC-12DE-4EC0-947C-7C305391E271}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9C8D5EC-12DE-4EC0-947C-7C305391E271}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9C8D5EC-12DE-4EC0-947C-7C305391E271}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8BD34F4-782C-450C-B598-E86CB50B9B69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8BD34F4-782C-450C-B598-E86CB50B9B69}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8BD34F4-782C-450C-B598-E86CB50B9B69}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8BD34F4-782C-450C-B598-E86CB50B9B69}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

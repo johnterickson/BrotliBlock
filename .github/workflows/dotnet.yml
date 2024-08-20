@@ -37,7 +37,7 @@ jobs:
     - name: Publish build outputs
       uses: actions/upload-artifact@v4
       with:
-        path: csharp/lib/bin/x64/Release/
+        path: csharp/lib/bin/Release/
         name: ${{ matrix.os }}_binaries
     - name: Publish package
       uses: actions/upload-artifact@v4
