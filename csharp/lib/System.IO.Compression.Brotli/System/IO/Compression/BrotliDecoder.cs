@@ -16,6 +16,11 @@ namespace BrotliBlockLib
 
         internal void InitializeDecoder()
         {
+            if (Marshal.SizeOf<IntPtr>() != 8)
+            {
+                throw new PlatformNotSupportedException("SR.PlatformNotSupported_BrotliRequires64Bit");
+            }
+            
             _state = Interop.Brotli.BrotliDecoderCreateInstance(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
             if (_state.IsInvalid)
                 throw new IOException("SR.BrotliDecoder_Create");

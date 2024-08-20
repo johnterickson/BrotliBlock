@@ -14,23 +14,6 @@ namespace BrotliBlockLib
         internal SafeBrotliEncoderHandle? _state;
         private bool _disposed;
 
-        /// <summary>Initializes a new instance of the <see cref="System.IO.Compression.BrotliEncoder" /> structure using the specified quality and window.</summary>
-        /// <param name="quality">A number representing quality of the Brotli compression. 0 is the minimum (no compression), 11 is the maximum.</param>
-        /// <param name="window">A number representing the encoder window bits. The minimum value is 10, and the maximum value is 24.</param>
-        /// <exception cref="System.ArgumentOutOfRangeException"><paramref name="quality" /> is not between the minimum value of 0 and the maximum value of 11.
-        /// -or-
-        /// <paramref name="window" /> is not between the minimum value of 10 and the maximum value of 24.</exception>
-        /// <exception cref="System.IO.IOException">Failed to create the <see cref="System.IO.Compression.BrotliEncoder" /> instance.</exception>
-        public BrotliEncoder(int quality, int window)
-        {
-            _disposed = false;
-            _state = Interop.Brotli.BrotliEncoderCreateInstance(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
-            if (_state.IsInvalid)
-                throw new IOException("BrotliEncoder_Create");
-            SetQuality(quality);
-            SetWindow(window);
-        }
-
         /// <summary>
         /// Performs a lazy initialization of the native encoder using the default Quality and Window values:
         /// BROTLI_DEFAULT_WINDOW 22
@@ -38,6 +21,11 @@ namespace BrotliBlockLib
         /// </summary>
         internal void InitializeEncoder()
         {
+            if (Marshal.SizeOf<IntPtr>() != 8)
+            {
+                throw new PlatformNotSupportedException("SR.PlatformNotSupported_BrotliRequires64Bit");
+            }
+
             EnsureNotDisposed();
             _state = Interop.Brotli.BrotliEncoderCreateInstance(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
             if (_state.IsInvalid)
