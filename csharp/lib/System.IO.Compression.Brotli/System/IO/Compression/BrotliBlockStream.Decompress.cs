@@ -97,30 +97,6 @@ namespace BrotliBlockLib
             return bytesWritten;
         }
 
-        /// <summary>Begins an asynchronous read operation. (Consider using the <see cref="System.IO.Stream.ReadAsync(byte[],int,int)" /> method instead.)</summary>
-        /// <param name="buffer">The buffer from which data will be read.</param>
-        /// <param name="offset">The byte offset in <paramref name="buffer" /> at which to begin reading data from the stream.</param>
-        /// <param name="count">To maximum number of bytes to read.</param>
-        /// <param name="asyncCallback">An optional asynchronous callback, to be called when the read operation is complete.</param>
-        /// <param name="asyncState">A user-provided object that distinguishes this particular asynchronous read request from other requests.</param>
-        /// <returns>An object that represents the asynchronous read operation, which could still be pending.</returns>
-        /// <exception cref="System.IO.IOException">The method tried to read asynchronously past the end of the stream, or a disk error occurred.</exception>
-        /// <exception cref="System.ArgumentException">One or more of the arguments is invalid.</exception>
-        /// <exception cref="System.ObjectDisposedException">Methods were called after the stream was closed.</exception>
-        /// <exception cref="System.NotSupportedException">The current <see cref="System.IO.Compression.BrotliStream" /> implementation does not support the read operation.</exception>
-        /// <exception cref="System.InvalidOperationException">This call cannot be completed.</exception>
-        public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback? asyncCallback, object? asyncState) =>
-            TaskToAsyncResult.Begin(ReadAsync(buffer, offset, count, CancellationToken.None), asyncCallback, asyncState);
-
-        /// <summary>Waits for the pending asynchronous read to complete. (Consider using the <see cref="System.IO.Stream.ReadAsync(byte[],int,int)" /> method instead.)</summary>
-        /// <param name="asyncResult">The reference to the pending asynchronous request to finish.</param>
-        /// <returns>The number of bytes read from the stream, between 0 (zero) and the number of bytes you requested. <see cref="System.IO.Compression.BrotliStream" /> returns 0 only at the end of the stream; otherwise, it blocks until at least one byte is available.</returns>
-        /// <exception cref="System.ArgumentNullException"><paramref name="asyncResult" /> is <see langword="null" />.</exception>
-        /// <exception cref="System.ArgumentException"><paramref name="asyncResult" /> did not originate from a <see cref="System.IO.Compression.BrotliStream.BeginRead(byte[],int,int,System.AsyncCallback,object)" /> method on the current stream.</exception>
-        /// <exception cref="System.InvalidOperationException">The end operation cannot be performed because the stream is closed.</exception>
-        public override int EndRead(IAsyncResult asyncResult) =>
-            TaskToAsyncResult.End<int>(asyncResult);
-
 #if !NETSTANDARD
         /// <summary>Asynchronously reads a sequence of bytes from the current Brotli stream, writes them to a byte array starting at a specified index, advances the position within the Brotli stream by the number of bytes read, and monitors cancellation requests.</summary>
         /// <param name="buffer">The buffer to write the data into.</param>

@@ -104,27 +104,6 @@ namespace BrotliBlockLib
         }
 
 #if !NETSTANDARD
-        /// <summary>Begins an asynchronous write operation. (Consider using the <see cref="System.IO.Stream.WriteAsync(byte[],int,int)" /> method instead.)</summary>
-        /// <param name="buffer">The buffer from which data will be written.</param>
-        /// <param name="offset">The byte offset in <paramref name="buffer" /> at which to begin writing data from the stream.</param>
-        /// <param name="count">The maximum number of bytes to write.</param>
-        /// <param name="asyncCallback">An optional asynchronous callback, to be called when the write operation is complete.</param>
-        /// <param name="asyncState">A user-provided object that distinguishes this particular asynchronous write request from other requests.</param>
-        /// <returns>An object that represents the asynchronous write operation, which could still be pending.</returns>
-        /// <exception cref="System.IO.IOException">The method tried to write asynchronously past the end of the stream, or a disk error occurred.</exception>
-        /// <exception cref="System.ArgumentException">One or more of the arguments is invalid.</exception>
-        /// <exception cref="System.ObjectDisposedException">Methods were called after the stream was closed.</exception>
-        /// <exception cref="System.NotSupportedException">The current <see cref="System.IO.Compression.BrotliStream" /> implementation does not support the write operation.</exception>
-        /// <exception cref="System.InvalidOperationException">The write operation cannot be performed because the stream is closed.</exception>
-        public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback? asyncCallback, object? asyncState) =>
-            TaskToAsyncResult.Begin(WriteAsync(buffer, offset, count, CancellationToken.None), asyncCallback, asyncState);
-
-        /// <summary>Handles the end of an asynchronous write operation. (Consider using the <see cref="System.IO.Stream.WriteAsync(byte[],int,int)" /> method instead.)</summary>
-        /// <param name="asyncResult">The object that represents the asynchronous call.</param>
-        /// <exception cref="System.InvalidOperationException">The underlying stream is closed or <see langword="null" />.</exception>
-        public override void EndWrite(IAsyncResult asyncResult) =>
-            TaskToAsyncResult.End(asyncResult);
-
         /// <summary>Asynchronously writes compressed bytes to the underlying Brotli stream from the specified byte array.</summary>
         /// <param name="buffer">The buffer that contains the data to compress.</param>
         /// <param name="offset">The zero-based byte offset in <paramref name="buffer" /> from which to begin copying bytes to the Brotli stream.</param>
@@ -134,10 +113,10 @@ namespace BrotliBlockLib
         /// <remarks><para>This method enables you to perform resource-intensive I/O operations without blocking the main thread. This performance consideration is particularly important in apps where a time-consuming stream operation can block the UI thread and make your app appear as if it is not working. The async methods are used in conjunction with the <see langword="async" /> and <see langword="await" /> keywords in Visual Basic and C#.</para>
         /// <para>Use the <see cref="System.IO.Compression.BrotliStream.CanWrite" /> property to determine whether the current instance supports writing.</para>
         /// <para>If the operation is canceled before it completes, the returned task contains the <see cref="System.Threading.Tasks.TaskStatus.Canceled" /> value for the <see cref="System.Threading.Tasks.Task.Status" /> property.</para></remarks>
-        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             NetstandardCompat.ValidateBufferArguments(buffer, offset, count);
-            return WriteAsync(buffer, offset, count, cancellationToken);
+            await WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, count), cancellationToken);
         }
 
         /// <summary>Asynchronously writes compressed bytes to the underlying Brotli stream from the specified byte memory range.</summary>

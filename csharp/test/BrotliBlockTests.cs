@@ -57,6 +57,24 @@ public class BrotliBlockTests
     }
 
     [TestMethod]
+    public async Task AsyncRoundTripLarge()
+    {
+        byte[] content = CreateRandomBytes(2 * 1024 * 1024, 256);
+        using var compressed = new MemoryStream();
+        using var compressingStream = new BrotliBlockStream(compressed, CompressionMode.Compress, leaveOpen: true);
+        await (new MemoryStream(content)).CopyToAsync(compressingStream);
+        compressingStream.Close();
+        compressed.Position = 0;
+
+        using var decompressingStream = new BrotliBlockStream(compressed, CompressionMode.Decompress);
+        using var decompressed = new MemoryStream();
+        await decompressingStream.CopyToAsync(decompressed);
+        decompressed.Position = 0;
+
+        CollectionAssert.AreEqual(content, decompressed.ToArray());
+    }
+
+    [TestMethod]
     public void Repro()
     {
         foreach (int size in new[] { 100_000 })
