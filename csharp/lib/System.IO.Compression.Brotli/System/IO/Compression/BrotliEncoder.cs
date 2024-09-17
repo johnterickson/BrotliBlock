@@ -98,28 +98,28 @@ namespace BrotliBlockLib
             }
         }
 
-        /// <summary>Gets the maximum expected compressed length for the provided input size.</summary>
-        /// <param name="inputSize">The input size to get the maximum expected compressed length from. Must be greater or equal than 0 and less or equal than <see cref="int.MaxValue" /> - 515.</param>
-        /// <returns>A number representing the maximum compressed length for the provided input size.</returns>
-        /// <remarks>Returns 1 if <paramref name="inputSize" /> is 0.</remarks>
-        /// <exception cref="System.ArgumentOutOfRangeException"><paramref name="inputSize" /> is less than 0, the minimum allowed input size, or greater than <see cref="int.MaxValue" /> - 515, the maximum allowed input size.</exception>
-        public static int GetMaxCompressedLength(int inputSize)
-        {
-            NetstandardCompat.ThrowIfNegative(inputSize, nameof(inputSize));
-            NetstandardCompat.ThrowIfGreaterThan(inputSize, BrotliUtils.MaxInputSize, nameof(inputSize));
+        ///// <summary>Gets the maximum expected compressed length for the provided input size.</summary>
+        ///// <param name="inputSize">The input size to get the maximum expected compressed length from. Must be greater or equal than 0 and less or equal than <see cref="int.MaxValue" /> - 515.</param>
+        ///// <returns>A number representing the maximum compressed length for the provided input size.</returns>
+        ///// <remarks>Returns 1 if <paramref name="inputSize" /> is 0.</remarks>
+        ///// <exception cref="System.ArgumentOutOfRangeException"><paramref name="inputSize" /> is less than 0, the minimum allowed input size, or greater than <see cref="int.MaxValue" /> - 515, the maximum allowed input size.</exception>
+        //public static int GetMaxCompressedLength(int inputSize)
+        //{
+        //    NetstandardCompat.ThrowIfNegative(inputSize, nameof(inputSize));
+        //    NetstandardCompat.ThrowIfGreaterThan(inputSize, BrotliUtils.MaxInputSize, nameof(inputSize));
 
-            if (inputSize == 0)
-            {
-                return 1;
-            }
+        //    if (inputSize == 0)
+        //    {
+        //        return 1;
+        //    }
 
-            int numLargeBlocks = inputSize >> 24;
-            int tail = inputSize & 0xFFFFFF;
-            int tailOverhead = (tail > (1 << 20)) ? 4 : 3;
-            int overhead = 2 + (4 * numLargeBlocks) + tailOverhead + 1;
-            int result = inputSize + overhead;
-            return result;
-        }
+        //    int numLargeBlocks = inputSize >> 24;
+        //    int tail = inputSize & 0xFFFFFF;
+        //    int tailOverhead = (tail > (1 << 20)) ? 4 : 3;
+        //    int overhead = 2 + (4 * numLargeBlocks) + tailOverhead + 1;
+        //    int result = inputSize + overhead;
+        //    return result;
+        //}
 
         internal OperationStatus Flush(Memory<byte> destination, out int bytesWritten) => Flush(destination.Span, out bytesWritten);
 
@@ -185,45 +185,45 @@ namespace BrotliBlockLib
             }
         }
 
-        /// <summary>Tries to compress a source byte span into a destination span.</summary>
-        /// <param name="source">A read-only span of bytes containing the source data to compress.</param>
-        /// <param name="destination">When this method returns, a span of bytes where the compressed data is stored.</param>
-        /// <param name="bytesWritten">When this method returns, the total number of bytes that were written to <paramref name="destination" />.</param>
-        /// <returns><see langword="true" /> if the compression operation was successful; <see langword="false" /> otherwise.</returns>
-        public static bool TryCompress(ReadOnlySpan<byte> source, Span<byte> destination, out int bytesWritten) => TryCompress(source, destination, out bytesWritten, BrotliUtils.Quality_Default, BrotliUtils.WindowBits_Default);
+        ///// <summary>Tries to compress a source byte span into a destination span.</summary>
+        ///// <param name="source">A read-only span of bytes containing the source data to compress.</param>
+        ///// <param name="destination">When this method returns, a span of bytes where the compressed data is stored.</param>
+        ///// <param name="bytesWritten">When this method returns, the total number of bytes that were written to <paramref name="destination" />.</param>
+        ///// <returns><see langword="true" /> if the compression operation was successful; <see langword="false" /> otherwise.</returns>
+        //public static bool TryCompress(ReadOnlySpan<byte> source, Span<byte> destination, out int bytesWritten) => TryCompress(source, destination, out bytesWritten, BrotliUtils.Quality_Default, BrotliUtils.WindowBits_Default);
 
-        /// <summary>Tries to compress a source byte span into a destination byte span, using the provided compression quality leven and encoder window bits.</summary>
-        /// <param name="source">A read-only span of bytes containing the source data to compress.</param>
-        /// <param name="destination">When this method returns, a span of bytes where the compressed data is stored.</param>
-        /// <param name="bytesWritten">When this method returns, the total number of bytes that were written to <paramref name="destination" />.</param>
-        /// <param name="quality">A number representing quality of the Brotli compression. 0 is the minimum (no compression), 11 is the maximum.</param>
-        /// <param name="window">A number representing the encoder window bits. The minimum value is 10, and the maximum value is 24.</param>
-        /// <returns><see langword="true" /> if the compression operation was successful; <see langword="false" /> otherwise.</returns>
-        public static bool TryCompress(ReadOnlySpan<byte> source, Span<byte> destination, out int bytesWritten, int quality, int window)
-        {
-            if (quality < 0 || quality > BrotliUtils.Quality_Max)
-            {
-                throw new ArgumentOutOfRangeException(nameof(quality), "SR.Format(SR.BrotliEncoder_Quality, quality, 0, BrotliUtils.Quality_Max)");
-            }
-            if (window < BrotliUtils.WindowBits_Min || window > BrotliUtils.WindowBits_Max)
-            {
-                throw new ArgumentOutOfRangeException(nameof(window), "SR.Format(SR.BrotliEncoder_Window, window, BrotliUtils.WindowBits_Min, BrotliUtils.WindowBits_Max)");
-            }
+        ///// <summary>Tries to compress a source byte span into a destination byte span, using the provided compression quality leven and encoder window bits.</summary>
+        ///// <param name="source">A read-only span of bytes containing the source data to compress.</param>
+        ///// <param name="destination">When this method returns, a span of bytes where the compressed data is stored.</param>
+        ///// <param name="bytesWritten">When this method returns, the total number of bytes that were written to <paramref name="destination" />.</param>
+        ///// <param name="quality">A number representing quality of the Brotli compression. 0 is the minimum (no compression), 11 is the maximum.</param>
+        ///// <param name="window">A number representing the encoder window bits. The minimum value is 10, and the maximum value is 24.</param>
+        ///// <returns><see langword="true" /> if the compression operation was successful; <see langword="false" /> otherwise.</returns>
+        //public static bool TryCompress(ReadOnlySpan<byte> source, Span<byte> destination, out int bytesWritten, int quality, int window)
+        //{
+        //    if (quality < 0 || quality > BrotliUtils.Quality_Max)
+        //    {
+        //        throw new ArgumentOutOfRangeException(nameof(quality), "SR.Format(SR.BrotliEncoder_Quality, quality, 0, BrotliUtils.Quality_Max)");
+        //    }
+        //    if (window < BrotliUtils.WindowBits_Min || window > BrotliUtils.WindowBits_Max)
+        //    {
+        //        throw new ArgumentOutOfRangeException(nameof(window), "SR.Format(SR.BrotliEncoder_Window, window, BrotliUtils.WindowBits_Min, BrotliUtils.WindowBits_Max)");
+        //    }
 
-            unsafe
-            {
-                fixed (byte* inBytes = &MemoryMarshal.GetReference(source))
-                fixed (byte* outBytes = &MemoryMarshal.GetReference(destination))
-                {
-                    nuint availableOutput = (nuint)destination.Length;
-                    bool success = Interop.Brotli.BrotliEncoderCompress(quality, window, /*BrotliEncoderMode*/ 0, (nuint)source.Length, inBytes, &availableOutput, outBytes) != Interop.BOOL.FALSE;
+        //    unsafe
+        //    {
+        //        fixed (byte* inBytes = &MemoryMarshal.GetReference(source))
+        //        fixed (byte* outBytes = &MemoryMarshal.GetReference(destination))
+        //        {
+        //            nuint availableOutput = (nuint)destination.Length;
+        //            bool success = Interop.Brotli.BrotliEncoderCompress(quality, window, /*BrotliEncoderMode*/ 0, (nuint)source.Length, inBytes, &availableOutput, outBytes) != Interop.BOOL.FALSE;
 
-                    Debug.Assert(success ? availableOutput <= (nuint)destination.Length : availableOutput == 0);
+        //            Debug.Assert(success ? availableOutput <= (nuint)destination.Length : availableOutput == 0);
 
-                    bytesWritten = (int)availableOutput;
-                    return success;
-                }
-            }
-        }
+        //            bytesWritten = (int)availableOutput;
+        //            return success;
+        //        }
+        //    }
+        //}
     }
 }

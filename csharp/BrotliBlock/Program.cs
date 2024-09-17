@@ -16,7 +16,7 @@ static class BrotliBlockApp
 
     public static void Main(string[] argsArray)
     {
-        uint window_bits = 22;
+        byte window_bits = 22;
         uint quality = 11;
         bool compress = false;
         uint block_size = 0;
@@ -34,7 +34,7 @@ static class BrotliBlockApp
             switch (arg)
             {
                 case "-w":
-                    window_bits = uint.Parse(args.Dequeue());
+                    window_bits = byte.Parse(args.Dequeue());
                     break;
                 case "-q":
                     quality = uint.Parse(args.Dequeue());
@@ -199,7 +199,7 @@ static class BrotliBlockApp
             using Stream output = output_path == "--" ? Console.OpenStandardOutput() : File.OpenWrite(output_path);
             using ConcatenatedStream input_stream = new(inputs);
             using Stream decompressed = blockPosition.HasValue
-                ? new BrotliBlockStream(input_stream, blockPosition.Value, window_size: window_bits)
+                ? BrotliBlockStream.CreateBlockDecompressionStream(input_stream, blockPosition.Value, window_size: window_bits)
                 : new BrotliStream(input_stream, CompressionMode.Decompress);
             decompressed.CopyTo(output);
         }

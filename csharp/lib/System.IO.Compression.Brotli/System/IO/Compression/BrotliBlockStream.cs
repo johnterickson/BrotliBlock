@@ -43,7 +43,10 @@ namespace BrotliBlockLib
 
         public static byte[] GetStartBlock(uint window_size) => StartBlocks[window_size].Value;
 
-        public BrotliBlockStream(Stream stream, BlockPosition position, bool leaveOpen = false, uint window_size = 22) : this (stream, CompressionMode.Decompress, leaveOpen)
+        public static BrotliBlockStream CreateBlockDecompressionStream(Stream stream, BlockPosition position, bool leaveOpen = false, uint window_size = 22) =>
+            new BrotliBlockStream(stream, position, leaveOpen, window_size);
+
+        private BrotliBlockStream(Stream stream, BlockPosition position, bool leaveOpen = false, uint window_size = 22) : this (stream, CompressionMode.Decompress, leaveOpen)
         {
             _window_bits = window_size;
             if (position == BlockPosition.Middle || position == BlockPosition.Last)

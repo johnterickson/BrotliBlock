@@ -12,19 +12,86 @@ public enum BlockPosition
 
 public static class BrotliBlock
 {
-    public static byte[] CompressBlock(byte[] bytes, BlockPosition position, byte window_size = 22)
+    public static byte[] CompressBlock(Stream bytes, BlockPosition position, byte window_size = 22)
     {
         using var compressed = new MemoryStream();
-        
+
         if (position == BlockPosition.First || position == BlockPosition.Single)
         {
             compressed.Write(BrotliBlockStream.GetStartBlock(window_size));
         }
 
         using (var s0 = new BrotliBlockStream(compressed, new BrotliCompressionOptions()
-            {
-                WindowBits = window_size, Bare = true, Catable = true, ByteAlign = true, Appendable = true, MagicNumber = true
-            },
+        {
+            WindowBits = window_size,
+            Bare = true,
+            Catable = true,
+            ByteAlign = true,
+            Appendable = true,
+            MagicNumber = true
+        },
+            leaveOpen: true))
+        {
+            bytes.CopyTo(s0);
+        }
+
+        if (position == BlockPosition.Last || position == BlockPosition.Single)
+        {
+            compressed.Write(BrotliBlockStream.EndBlock);
+        }
+
+        return compressed.ToArray();
+    }
+
+    public static async Task<byte[]> CompressBlockAsync(Stream bytes, BlockPosition position, byte window_size = 22)
+    {
+        using var compressed = new MemoryStream();
+
+        if (position == BlockPosition.First || position == BlockPosition.Single)
+        {
+            compressed.Write(BrotliBlockStream.GetStartBlock(window_size));
+        }
+
+        using (var s0 = new BrotliBlockStream(compressed, new BrotliCompressionOptions()
+        {
+            WindowBits = window_size,
+            Bare = true,
+            Catable = true,
+            ByteAlign = true,
+            Appendable = true,
+            MagicNumber = true
+        },
+            leaveOpen: true))
+        {
+            await bytes.CopyToAsync(s0);
+        }
+
+        if (position == BlockPosition.Last || position == BlockPosition.Single)
+        {
+            compressed.Write(BrotliBlockStream.EndBlock);
+        }
+
+        return compressed.ToArray();
+    }
+
+    public static byte[] CompressBlock(ReadOnlySpan<byte> bytes, BlockPosition position, byte window_size = 22)
+    {
+        using var compressed = new MemoryStream();
+
+        if (position == BlockPosition.First || position == BlockPosition.Single)
+        {
+            compressed.Write(BrotliBlockStream.GetStartBlock(window_size));
+        }
+
+        using (var s0 = new BrotliBlockStream(compressed, new BrotliCompressionOptions()
+        {
+            WindowBits = window_size,
+            Bare = true,
+            Catable = true,
+            ByteAlign = true,
+            Appendable = true,
+            MagicNumber = true
+        },
             leaveOpen: true))
         {
             s0.Write(bytes);
@@ -38,7 +105,7 @@ public static class BrotliBlock
         return compressed.ToArray();
     }
 
-    public static byte[] Compress(byte[] bytes, bool bare = false, byte window_size = 22)
+    public static byte[] Compress(ReadOnlySpan<byte> bytes, bool bare = false, byte window_size = 22)
     {
         using var compressed = new MemoryStream();
 
@@ -59,15 +126,9 @@ public static class BrotliBlock
         return compressed.ToArray();
     }
 
-    public static byte[] Decompress(Stream compressed, BlockPosition position, byte window_size = 22)
+    public static byte[] DecompressBlock(Stream compressed, BlockPosition position, byte window_size = 22)
     {
-#if NETSTANDARD
-        using Stream decompressedBrotli = new BrotliBlockStream(compressed, position, window_size: window_size);
-#else
-        using Stream decompressedBrotli = position != BlockPosition.Single
-            ? new BrotliBlockStream(compressed, position, window_size: window_size)
-            : new BrotliStream(compressed, CompressionMode.Decompress);
-#endif
+        using Stream decompressedBrotli = BrotliBlockStream.CreateBlockDecompressionStream(compressed, position, window_size: window_size);
         using var decompressedStream = new MemoryStream();
         decompressedBrotli.CopyTo(decompressedStream);
         return decompressedStream.ToArray();
