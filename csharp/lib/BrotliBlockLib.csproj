@@ -11,14 +11,14 @@
     <Version>0.0.9</Version>
   </PropertyGroup>
 
-  <!-- Native libs copied to output for local dev/test -->
-  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+  <!-- Native libs copied to output for local dev/test (not in CI where runtimes/ staging is used) -->
+  <ItemGroup Condition="'$(GITHUB_ACTIONS)' != 'true'">
     <None Include="$(MSBuildThisFileDirectory)../../rust-brotli/c/target/release/brotli_ffi.dll"
+          Condition="$([MSBuild]::IsOSPlatform('Windows'))"
           CopyToOutputDirectory="PreserveNewest"
           Link="brotli_ffi.dll" />
-  </ItemGroup>
-  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
     <None Include="$(MSBuildThisFileDirectory)../../rust-brotli/c/target/release/libbrotli_ffi.so"
+          Condition="$([MSBuild]::IsOSPlatform('Linux'))"
           CopyToOutputDirectory="PreserveNewest"
           Link="libbrotli_ffi.so" />
   </ItemGroup>
