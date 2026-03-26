@@ -8,17 +8,29 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>Latest</LangVersion>
     <NoWarn>CS8981;CS8601;CS8602;CS8603;CS8604;;CS8618;CS8625;CS8765</NoWarn>
-    <NativeLib Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(MSBuildThisFileDirectory)../../rust-brotli/c/target/release/brotli_ffi.dll</NativeLib>
-    <NativeLib Condition="$([MSBuild]::IsOSPlatform('Linux'))">$(MSBuildThisFileDirectory)../../rust-brotli/c/target/release/libbrotli_ffi.so</NativeLib>
     <Version>0.0.9</Version>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Content Include="$(NativeLib)">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <IncludeInPackage>true</IncludeInPackage>
-      <PackagePath>lib/net8.0;lib/netstandard2.0</PackagePath>
-    </Content>
+  <!-- Native libs copied to output for local dev/test -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <None Include="$(MSBuildThisFileDirectory)../../rust-brotli/c/target/release/brotli_ffi.dll"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="brotli_ffi.dll" />
+  </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+    <None Include="$(MSBuildThisFileDirectory)../../rust-brotli/c/target/release/libbrotli_ffi.so"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="libbrotli_ffi.so" />
+  </ItemGroup>
+
+  <!-- Native libs packed into runtimes/ folders in the nupkg (CI only) -->
+  <ItemGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <None Include="$(MSBuildThisFileDirectory)runtimes/win-x64/native/brotli_ffi.dll"
+          Pack="true"
+          PackagePath="runtimes/win-x64/native" />
+    <None Include="$(MSBuildThisFileDirectory)runtimes/linux-x64/native/libbrotli_ffi.so"
+          Pack="true"
+          PackagePath="runtimes/linux-x64/native" />
   </ItemGroup>
 
   <ItemGroup>

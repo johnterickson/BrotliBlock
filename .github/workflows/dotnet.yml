@@ -13,7 +13,13 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            native-lib: rust-brotli/c/target/release/libbrotli_ffi.so
+            artifact-name: linux-x64-native
+          - os: windows-latest
+            native-lib: rust-brotli/c/target/release/brotli_ffi.dll
+            artifact-name: win-x64-native
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -32,17 +38,48 @@ jobs:
       run: cd csharp && dotnet build --no-restore && dotnet build --no-restore -c Release
     - name: Test
       run: cd csharp && dotnet test --no-build --verbosity normal && dotnet test --no-build --verbosity normal -c Release
-    - name: Create nuget package
-      run: cd csharp && dotnet pack --no-build --output nupkgs
+    - name: Upload native lib
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact-name }}
+        path: ${{ matrix.native-lib }}
     - name: Publish build outputs
       uses: actions/upload-artifact@v4
       with:
         path: csharp/lib/bin/Release/
         name: ${{ matrix.os }}_binaries
+
+  pack:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Download Windows native lib
+      uses: actions/download-artifact@v4
+      with:
+        name: win-x64-native
+        path: csharp/lib/runtimes/win-x64/native
+    - name: Download Linux native lib
+      uses: actions/download-artifact@v4
+      with:
+        name: linux-x64-native
+        path: csharp/lib/runtimes/linux-x64/native
+    - name: Restore dependencies
+      run: cd csharp && dotnet restore
+    - name: Build Release
+      run: cd csharp/lib && dotnet build -c Release
+    - name: Create nuget package
+      run: cd csharp && dotnet pack lib/BrotliBlockLib.csproj -c Release --output nupkgs
     - name: Publish package
       uses: actions/upload-artifact@v4
       with:
         path: csharp/nupkgs/BrotliBlockLib*.nupkg
-        name: ${{ matrix.os }}_nupkgs
+        name: nupkg
       
 
